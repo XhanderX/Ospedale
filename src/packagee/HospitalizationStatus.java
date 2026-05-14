@@ -8,18 +8,11 @@ package packagee;
  *
  * @author edangulo
  */
-public enum Specialty {
+public enum HospitalizationStatus {
     
-    GENERAL_MEDICINE,
-    CARDIOLOGY,
-    PEDIATRICS,
-    NEUROLOGY,
-    TRAUMATOLOGY_ORTHOPEDICS,
-    GYNECOLOGY_OBSTETRICS,
-    DERMATOLOGY,
-    PSYCHIATRY,
-    ONCOLOGY,
-    OPHTHALMOLOGY,
-    INTERNAL_MEDICINE
+    REQUESTED,
+    ONGOING,
+    FINISHED,
+    CANCELED
     
 }

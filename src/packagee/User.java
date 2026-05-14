@@ -10,7 +10,7 @@ package packagee;
  */
 public abstract class User {
     
-    protected long id;
+    protected final long id;
     protected String username;
     protected String firstname;
     protected String lastname;
@@ -22,6 +22,26 @@ public abstract class User {
         this.firstname = firstname;
         this.lastname = lastname;
         this.password = password;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public String getPassword() {
+        return password;
     }
     
 }

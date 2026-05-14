@@ -8,18 +8,12 @@ package packagee;
  *
  * @author edangulo
  */
-public enum Specialty {
+public enum RoomType {
     
-    GENERAL_MEDICINE,
-    CARDIOLOGY,
-    PEDIATRICS,
-    NEUROLOGY,
-    TRAUMATOLOGY_ORTHOPEDICS,
-    GYNECOLOGY_OBSTETRICS,
-    DERMATOLOGY,
-    PSYCHIATRY,
-    ONCOLOGY,
-    OPHTHALMOLOGY,
-    INTERNAL_MEDICINE
+    STANDARD,
+    ICU,            // Intensive Care Unit
+    NICU,           // Neonatal Intensive Care Unit
+    IMC,            // Intermediate Care Unit
+    ISOLATION
     
 }

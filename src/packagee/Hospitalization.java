@@ -4,32 +4,32 @@
  */
 package packagee;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  *
  * @author edangulo
  */
-public class Appointment {
+public class Hospitalization {
     
     private final String id;
     private Patient patient;
     private Doctor doctor;
-    private Specialty specialty;
-    private LocalDateTime datetime;
+    private LocalDate date;
     private String reason;
-    private boolean type;
-    private AppointmentStatus status;
+    private RoomType roomType;
+    private String observations;
+    private HospitalizationStatus status;
 
-    public Appointment(String id, Patient patient, Doctor doctor, Specialty specialty, LocalDateTime datetime, String reason, boolean type) {
+    public Hospitalization(String id, Patient patient, Doctor doctor, LocalDate date, String reason, RoomType roomType, String observations) {
         this.id = id;
         this.patient = patient;
         this.doctor = doctor;
-        this.specialty = specialty;
-        this.datetime = datetime;
+        this.date = date;
         this.reason = reason;
-        this.type = type;
-        this.status = AppointmentStatus.REQUESTED;
+        this.roomType = roomType;
+        this.observations = observations;
+        this.status = HospitalizationStatus.REQUESTED;
     }
     
 }

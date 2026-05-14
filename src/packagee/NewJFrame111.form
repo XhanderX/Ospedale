@@ -434,18 +434,19 @@
                       <Font name="Yu Gothic UI" size="18" style="0"/>
                     </Property>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                      <StringArray count="11">
+                      <StringArray count="12">
                         <StringItem index="0" value="Select one"/>
-                        <StringItem index="1" value="Cardiology"/>
-                        <StringItem index="2" value="Pediatrics"/>
-                        <StringItem index="3" value="Neurology"/>
-                        <StringItem index="4" value="Traumatology &amp; Orthopedics"/>
-                        <StringItem index="5" value="Gynecology &amp; Obstetrics"/>
-                        <StringItem index="6" value="Dermatology"/>
-                        <StringItem index="7" value="Psychiatry"/>
-                        <StringItem index="8" value="Oncology"/>
-                        <StringItem index="9" value="Ophthalmology"/>
-                        <StringItem index="10" value="Internal Medicine"/>
+                        <StringItem index="1" value="General Medicine"/>
+                        <StringItem index="2" value="Cardiology"/>
+                        <StringItem index="3" value="Pediatrics"/>
+                        <StringItem index="4" value="Neurology"/>
+                        <StringItem index="5" value="Traumatology &amp; Orthopedics"/>
+                        <StringItem index="6" value="Gynecology &amp; Obstetrics"/>
+                        <StringItem index="7" value="Dermatology"/>
+                        <StringItem index="8" value="Psychiatry"/>
+                        <StringItem index="9" value="Oncology"/>
+                        <StringItem index="10" value="Ophthalmology"/>
+                        <StringItem index="11" value="Internal Medicine"/>
                       </StringArray>
                     </Property>
                   </Properties>
