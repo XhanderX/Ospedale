@@ -8,9 +8,9 @@ package packagee.model;
  *
  * @author USER
  */
-public class Administrador extends User {
+public class Administrator extends User {
 
-    public Administrador(long id, String username, String firstname, String lastname, String password) {
+    public Administrator(long id, String username, String firstname, String lastname, String password) {
         super(id, username, firstname, lastname, password);
     }
 
