@@ -5,13 +5,44 @@
 package packagee.storage;
 
 import java.io.IOException;
+
 /**
  *
  * @author USER
  */
 public class HospitalStorage {
+
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
     private final HospitalizationRepository hospitalizationRepository;
     private final IdGenerator idGenerator;
+
+    public HospitalStorage() {
+        this.userRepository = new InMemoryUserRepository();
+        this.appointmentRepository = new InMemoryAppointmentRepository();
+        this.hospitalizationRepository = new InMemoryHospitalizationRepository();
+        this.idGenerator = new IdGenerator(appointmentRepository, hospitalizationRepository);
+    }
+
+    public void loadUserFromJson(String path) throws IOException {
+        JsonUserLoader loader = new JsonUserLoader(userRepository);
+        loader.load(path);
+    }
+
+    public UserRepository getUserRepository() {
+        return userRepository;
+    }
+
+    public AppointmentRepository getAppointmentRepository() {
+        return appointmentRepository;
+    }
+
+    public HospitalizationRepository getHospitalizationRepository() {
+        return hospitalizationRepository;
+    }
+
+    public IdGenerator getIdGenerator() {
+        return idGenerator;
+    }
+
 }
