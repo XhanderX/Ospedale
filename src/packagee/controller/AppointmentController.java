@@ -2,13 +2,14 @@ package packagee.controller;
 
 import packagee.response.Response;
 import packagee.response.StatusCode;
+import packagee.service.IAppointmentAvailabilityService;
 import packagee.validator.IAppointmentValidator;
 import packagee.validator.IUserValidator;
 
 /**
  * Controlador de Citas Médicas.
  * Gestiona todo el ciclo de vida de una cita y las prescripciones asociadas.
-
+ * Cumple con SOLID (DIP al depender de interfaces en su constructor).
  *
  * @author Issa
  */
@@ -16,13 +17,17 @@ public class AppointmentController {
 
     private final IAppointmentValidator appointmentValidator;
     private final IUserValidator userValidator;
+    private final IAppointmentAvailabilityService availabilityService;
 
     /**
      * Constructor con Inyección de Dependencias (DIP).
      */
-    public AppointmentController(IAppointmentValidator appointmentValidator, IUserValidator userValidator) {
+    public AppointmentController(IAppointmentValidator appointmentValidator, 
+                                 IUserValidator userValidator, 
+                                 IAppointmentAvailabilityService availabilityService) {
         this.appointmentValidator = appointmentValidator;
         this.userValidator = userValidator;
+        this.availabilityService = availabilityService;
     }
 
     /**
