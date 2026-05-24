@@ -24,7 +24,7 @@ public class HospitalStorage {
         this.idGenerator = new IdGenerator(appointmentRepository, hospitalizationRepository);
     }
 
-    public void loadUserFromJson(String path) throws IOException {
+    public void loadUsersFromJson(String path) throws IOException {
         JsonUserLoader loader = new JsonUserLoader(userRepository);
         loader.load(path);
     }

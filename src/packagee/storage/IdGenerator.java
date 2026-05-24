@@ -23,7 +23,7 @@ public class IdGenerator {
         return String.format("A-%012d-%04d", patientId, next);
     }
 
-    public String nexthospitalizationId(long patientId) {
+    public String nextHospitalizationId(long patientId) {
         int next = hospitalizationRepository.countByPatientId(patientId);
         return String.format("H-%012d-%04d", patientId, next);
     }

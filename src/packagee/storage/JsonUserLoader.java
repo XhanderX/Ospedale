@@ -35,7 +35,7 @@ public class JsonUserLoader {
 
             if (type.equals("admin")) {
                 userRepository.save(new Administrator(
-                        item.getInt("id"),
+                        item.getLong("id"),
                         item.getString("username"),
                         item.getString("firstname"),
                         item.getString("lastname"),
