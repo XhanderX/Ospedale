@@ -1,5 +1,6 @@
 package packagee;
 
+import packagee.view.LoginView;
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.UIManager;
 
@@ -15,6 +16,6 @@ public class Main {
             System.err.println("Failed to initialize LaF");
         }
 
-        java.awt.EventQueue.invokeLater(() -> new NewJFrame().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new LoginView().setVisible(true));
     }
 }
