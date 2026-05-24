@@ -2,17 +2,18 @@ package packagee.validator;
 
 /**
  * Validador para las propiedades específicas de un Doctor.
- * Extiende las validaciones base de UserValidator.
+ * Implementa IDoctorValidator para cumplir con DIP.
  *
  * @author Issa
  */
-public class DoctorValidator extends UserValidator {
+public class DoctorValidator implements IDoctorValidator {
 
     /**
      * Valida que el número de licencia médica tenga el formato: L-XXXXXXXXXX MTL
      * donde X son exactamente 10 dígitos numéricos.
      */
-    public static boolean validateLicenceNumber(String licenceNumber) {
+    @Override
+    public boolean validateLicenceNumber(String licenceNumber) {
         if (licenceNumber == null) {
             return false;
         }
@@ -23,7 +24,8 @@ public class DoctorValidator extends UserValidator {
      * Valida que la oficina asignada tenga el formato: O-XXX
      * donde X son exactamente 3 dígitos numéricos.
      */
-    public static boolean validateAssignedOffice(String assignedOffice) {
+    @Override
+    public boolean validateAssignedOffice(String assignedOffice) {
         if (assignedOffice == null) {
             return false;
         }

@@ -1,29 +1,37 @@
 package packagee.validator;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-
 /**
  * Validador para las propiedades de una Cita Médica. Valida fechas, horas y que
  * los minutos sean cuartos de hora exactos.
+ * Implementa IAppointmentValidator para cumplir con DIP.
  *
  * @author Issa
  */
-public class AppointmentValidator {
+public class AppointmentValidator implements IAppointmentValidator {
+
+    private final IDateValidator dateValidator;
+
+    /**
+     * Constructor con Inyección de Dependencia de IDateValidator.
+     */
+    public AppointmentValidator(IDateValidator dateValidator) {
+        this.dateValidator = dateValidator;
+    }
 
     /**
      * Valida que la fecha tenga el formato AAAA-MM-DD y sea una fecha real.
-     * Delega en DateValidator para mantener el principio de responsabilidad única.
+     * Delega en la abstracción IDateValidator inyectada.
      */
-    public static boolean validateDate(String date) {
-        return DateValidator.validateDate(date);
+    @Override
+    public boolean validateDate(String date) {
+        return dateValidator.validateDate(date);
     }
 
     /**
      * Valida que la hora tenga el formato hh:mm en 24 horas. 
      */
-    public static boolean validateTimeFormat(String time) {
+    @Override
+    public boolean validateTimeFormat(String time) {
         if (time == null) {
             return false;
         }
@@ -34,7 +42,8 @@ public class AppointmentValidator {
      * Valida que los minutos de la hora sean exactamente cuartos de hora: 00,
      * 15, 30 o 45. Se debe llamar DESPUÉS de validateTimeFormat.
      */
-    public static boolean validateQuarterMinutes(String time) {
+    @Override
+    public boolean validateQuarterMinutes(String time) {
         if (time == null || time.length() < 5) {
             return false;
         }
@@ -49,7 +58,8 @@ public class AppointmentValidator {
     /**
      * Valida la hora completa: formato correcto Y minutos en cuartos de hora.
      */
-    public static boolean validateTime(String time) {
+    @Override
+    public boolean validateTime(String time) {
         return validateTimeFormat(time) && validateQuarterMinutes(time);
     }
 }

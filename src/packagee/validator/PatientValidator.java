@@ -2,16 +2,26 @@ package packagee.validator;
 
 /**
  * Validador para las propiedades específicas de un Paciente.
- * Extiende las validaciones base de UserValidator.
+ * Implementa IPatientValidator para cumplir con DIP.
  *
  * @author Issa
  */
-public class PatientValidator extends UserValidator {
+public class PatientValidator implements IPatientValidator {
+
+    private final IDateValidator dateValidator;
+
+    /**
+     * Constructor con Inyección de Dependencia de IDateValidator.
+     */
+    public PatientValidator(IDateValidator dateValidator) {
+        this.dateValidator = dateValidator;
+    }
 
     /**
      * Valida que el teléfono tenga exactamente 10 dígitos numéricos.
      */
-    public static boolean validatePhone(String phone) {
+    @Override
+    public boolean validatePhone(String phone) {
         if (phone == null) {
             return false;
         }
@@ -21,7 +31,8 @@ public class PatientValidator extends UserValidator {
     /**
      * Valida que el email tenga un formato válido (ejemplo@dominio.com).
      */
-    public static boolean validateEmail(String email) {
+    @Override
+    public boolean validateEmail(String email) {
         if (email == null) {
             return false;
         }
@@ -30,9 +41,10 @@ public class PatientValidator extends UserValidator {
 
     /**
      * Valida que la fecha de nacimiento tenga el formato AAAA-MM-DD y sea válida.
-     * Delega en DateValidator para mantener el principio de responsabilidad única.
+     * Delega en la abstracción IDateValidator inyectada.
      */
-    public static boolean validateBirthdate(String birthdate) {
-        return DateValidator.validateDate(birthdate);
+    @Override
+    public boolean validateBirthdate(String birthdate) {
+        return dateValidator.validateDate(birthdate);
     }
 }
