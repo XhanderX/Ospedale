@@ -25,9 +25,9 @@ import packagee.validator.IAppointmentValidator;
 import packagee.validator.IUserValidator;
 
 /**
- * Controlador de Citas Médicas.
- * Gestiona todo el ciclo de vida de una cita y las prescripciones asociadas.
- * Cumple con SOLID (DIP al depender de interfaces en su constructor).
+ * Controlador de Citas Médicas. Gestiona todo el ciclo de vida de una cita y
+ * las prescripciones asociadas. Cumple con SOLID (DIP al depender de interfaces
+ * en su constructor).
  *
  * @author Issa
  */
@@ -43,19 +43,19 @@ public class AppointmentController {
     /**
      * Constructor con Inyección de Dependencias (DIP).
      *
-     * @param appointmentValidator  Validador de fecha y hora de citas.
-     * @param userValidator         Validador de datos de usuarios.
-     * @param availabilityService   Servicio de disponibilidad horaria.
+     * @param appointmentValidator Validador de fecha y hora de citas.
+     * @param userValidator Validador de datos de usuarios.
+     * @param availabilityService Servicio de disponibilidad horaria.
      * @param appointmentRepository Repositorio de citas.
-     * @param userRepository        Repositorio de usuarios.
-     * @param idGenerator           Generador de IDs de citas.
+     * @param userRepository Repositorio de usuarios.
+     * @param idGenerator Generador de IDs de citas.
      */
     public AppointmentController(IAppointmentValidator appointmentValidator,
-                                 IUserValidator userValidator,
-                                 IAppointmentAvailabilityService availabilityService,
-                                 AppointmentRepository appointmentRepository,
-                                 UserRepository userRepository,
-                                 IdGenerator idGenerator) {
+            IUserValidator userValidator,
+            IAppointmentAvailabilityService availabilityService,
+            AppointmentRepository appointmentRepository,
+            UserRepository userRepository,
+            IdGenerator idGenerator) {
         this.appointmentValidator = appointmentValidator;
         this.userValidator = userValidator;
         this.availabilityService = availabilityService;
@@ -65,22 +65,23 @@ public class AppointmentController {
     }
 
     /**
-     * Solicita una nueva cita médica.
-     * Genera el ID con formato A-{id_paciente}-NNNN y la crea en estado REQUESTED.
-     * Si no se especifica doctor, se asigna automáticamente por especialidad.
+     * Solicita una nueva cita médica. Genera el ID con formato
+     * A-{id_paciente}-NNNN y la crea en estado REQUESTED. Si no se especifica
+     * doctor, se asigna automáticamente por especialidad.
      *
      * @param patientId ID del paciente (12 dígitos).
-     * @param doctorId  ID del doctor (opcional, null para asignar por especialidad).
+     * @param doctorId ID del doctor (opcional, null para asignar por
+     * especialidad).
      * @param specialty Especialidad solicitada (valor del enum Specialty).
-     * @param date      Fecha de la cita (AAAA-MM-DD).
-     * @param time      Hora de la cita (hh:mm, 24h, minutos en cuartos).
-     * @param reason    Motivo de la consulta.
-     * @param type      Tipo de cita ("REMOTE" o "IN_PERSON").
+     * @param date Fecha de la cita (AAAA-MM-DD).
+     * @param time Hora de la cita (hh:mm, 24h, minutos en cuartos).
+     * @param reason Motivo de la consulta.
+     * @param type Tipo de cita ("REMOTE" o "IN_PERSON").
      * @return Response con AppointmentDTO en caso de éxito.
      */
     public Response<AppointmentDTO> requestAppointment(long patientId, Long doctorId,
-                                                       String specialty, String date,
-                                                       String time, String reason, String type) {
+            String specialty, String date,
+            String time, String reason, String type) {
         // 1. Validar ID del paciente
         if (!userValidator.validateId(patientId)) {
             return Response.error(StatusCode.INVALID_DATA, "ID de paciente inválido.");
@@ -92,11 +93,13 @@ public class AppointmentController {
         }
 
         // 3. Validar especialidad
-        Specialty appointmentSpecialty;
-        try {
-            appointmentSpecialty = Specialty.valueOf(specialty.toUpperCase());
-        } catch (IllegalArgumentException | NullPointerException e) {
-            return Response.error(StatusCode.INVALID_DATA, "La especialidad no es válida.");
+        Specialty appointmentSpecialty = null;
+        if (doctorId == null) {
+            try {
+                appointmentSpecialty = Specialty.valueOf(specialty.toUpperCase());
+            } catch (IllegalArgumentException | NullPointerException e) {
+                return Response.error(StatusCode.INVALID_DATA, "La especialidad no es válida.");
+            }
         }
 
         // 4. Validar fecha (AAAA-MM-DD)
@@ -131,24 +134,28 @@ public class AppointmentController {
 
         // 9. Resolver doctor: por ID directo o por asignación automática
         Doctor doctor;
-        if (doctorId != null) {
-            Optional<User> doctorFound = userRepository.findById(doctorId);
-            if (!doctorFound.isPresent() || !(doctorFound.get() instanceof Doctor)) {
-                return Response.error(StatusCode.INVALID_DATA, "No se encontró un doctor con ese ID.");
-            }
-            doctor = (Doctor) doctorFound.get();
-        } else {
-            // Asignación automática por especialidad
-            Long assignedId = availabilityService.assignDoctorBySpecialty(specialty, date, time);
-            if (assignedId == null) {
-                return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No hay doctores disponibles con esa especialidad en la franja horaria solicitada.");
-            }
-            Optional<User> assignedFound = userRepository.findById(assignedId);
-            if (!assignedFound.isPresent() || !(assignedFound.get() instanceof Doctor)) {
-                return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No se pudo asignar un doctor disponible.");
-            }
-            doctor = (Doctor) assignedFound.get();
-        }
+
+if (doctorId != null) {
+    Optional<User> doctorFound = userRepository.findById(doctorId);
+    if (!doctorFound.isPresent() || !(doctorFound.get() instanceof Doctor)) {
+        return Response.error(StatusCode.INVALID_DATA, "No se encontro un doctor con ese ID.");
+    }
+
+    doctor = (Doctor) doctorFound.get();
+    appointmentSpecialty = doctor.getSpecialty();
+} else {
+    Long assignedId = availabilityService.assignDoctorBySpecialty(specialty.toUpperCase(), date, time);
+    if (assignedId == null) {
+        return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No hay doctores disponibles con esa especialidad en la franja horaria solicitada.");
+    }
+
+    Optional<User> assignedFound = userRepository.findById(assignedId);
+    if (!assignedFound.isPresent() || !(assignedFound.get() instanceof Doctor)) {
+        return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No se pudo asignar un doctor disponible.");
+    }
+
+    doctor = (Doctor) assignedFound.get();
+}
 
         // 10. Verificar disponibilidad del doctor en la franja horaria
         if (!availabilityService.checkAvailability(doctor.getId(), date, time)) {
@@ -229,8 +236,8 @@ public class AppointmentController {
     }
 
     /**
-     * Cancela una cita médica. Pasa su estado a CANCELED.
-     * No se puede cancelar una cita ya COMPLETED o CANCELED.
+     * Cancela una cita médica. Pasa su estado a CANCELED. No se puede cancelar
+     * una cita ya COMPLETED o CANCELED.
      *
      * @param appointmentId ID de la cita.
      * @return Response con AppointmentDTO actualizado.
@@ -259,13 +266,13 @@ public class AppointmentController {
     }
 
     /**
-     * Reagenda una cita a una nueva hora del mismo día.
-     * No se puede cambiar la fecha, solo la hora.
-     * La razón de reprogramación se concatena a la razón original con "|".
+     * Reagenda una cita a una nueva hora del mismo día. No se puede cambiar la
+     * fecha, solo la hora. La razón de reprogramación se concatena a la razón
+     * original con "|".
      *
      * @param appointmentId ID de la cita.
-     * @param newTime       Nueva hora (hh:mm, 24h, cuartos de hora).
-     * @param reason        Razón de la reprogramación.
+     * @param newTime Nueva hora (hh:mm, 24h, cuartos de hora).
+     * @param reason Razón de la reprogramación.
      * @return Response con AppointmentDTO actualizado.
      */
     public Response<AppointmentDTO> rescheduleAppointment(String appointmentId, String newTime, String reason) {
@@ -322,16 +329,16 @@ public class AppointmentController {
      *
      * @param appointmentId ID de la cita.
      * @param medicationName Nombre del medicamento.
-     * @param dose           Dosis del medicamento (mayor que 0).
-     * @param adminRoute     Vía de administración.
-     * @param duration       Duración del tratamiento en días (mayor que 0).
-     * @param instructions   Instrucciones adicionales.
-     * @param frequency      Frecuencia de toma en horas (mayor que 0).
+     * @param dose Dosis del medicamento (mayor que 0).
+     * @param adminRoute Vía de administración.
+     * @param duration Duración del tratamiento en días (mayor que 0).
+     * @param instructions Instrucciones adicionales.
+     * @param frequency Frecuencia de toma en horas (mayor que 0).
      * @return Response con PrescriptionDTO en caso de éxito.
      */
     public Response<PrescriptionDTO> prescribeMedications(String appointmentId, String medicationName,
-                                                          double dose, String adminRoute, int duration,
-                                                          String instructions, int frequency) {
+            double dose, String adminRoute, int duration,
+            String instructions, int frequency) {
         if (appointmentId == null || appointmentId.trim().isEmpty()) {
             return Response.error(StatusCode.INVALID_DATA, "ID de cita no válido.");
         }
