@@ -5,14 +5,14 @@
 package packagee.view;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
-import packagee.Appointment;
-import packagee.Doctor;
-import packagee.Hospitalization;
-import packagee.Patient;
-import packagee.Specialty;
-import packagee.User;
+import packagee.AppContext;
+import packagee.dto.UserDTO;
+import packagee.model.Doctor;
+import packagee.model.Patient;
+import packagee.model.Specialty;
+import packagee.model.User;
+import packagee.response.Response;
 
 /**
  *
@@ -22,16 +22,13 @@ import packagee.User;
 public class AdminView extends javax.swing.JFrame {
 
     private int x, y;
-    private ArrayList<User> users;
-    private ArrayList<Appointment>appointments;
-    private ArrayList<Hospitalization>hospitalizations;
-    private User user;
-    public AdminView(User user, ArrayList<User>users,ArrayList<Hospitalization> hospitalizations, ArrayList<Appointment> appointments) {
+    private final AppContext appContext;
+    private final UserDTO currentUser;
+
+    public AdminView(UserDTO user) {
         initComponents();
-        this.user = user;
-        this.users = users;
-        this.hospitalizations = hospitalizations;
-        this.appointments = appointments;
+        this.appContext = AppContext.getInstance();
+        this.currentUser = user;
         loadUserSelectors();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
@@ -418,32 +415,50 @@ public class AdminView extends javax.swing.JFrame {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void SaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButtonActionPerformed
-        String firstname = FirstNameField.getText();
-        String lastname = LastNameField.getText();
-        long id = parseLongValue(IdField.getText());
-        Specialty specialty = getSelectedSpecialty();
-        String licenseNumber = LicenseField.getText();
-        String assignedOffice = OfficeField.getText();
-        String username = UserField.getText();
-        String password = PasswordField.getText();
-        String comPassword = ConfirmationField.getText();
-        if (password.equals(comPassword)) {
-            users.add(new Doctor(id, username, firstname, lastname, password, specialty, licenseNumber, assignedOffice));
-            clearDoctorForm();
-            loadUserSelectors();
-            showMessage("Doctor registered successfully.");
-        } else {
-            showError("Password confirmation does not match.");
+        if (!validateDoctorForm()) {
+            return;
+        }
+        try {
+            Response<?> response = appContext.getDoctorController().registerDoctor(
+                    parseLongValue(IdField.getText()),
+                    UserField.getText(),
+                    FirstNameField.getText(),
+                    LastNameField.getText(),
+                    PasswordField.getText(),
+                    ConfirmationField.getText(),
+                    LicenseField.getText(),
+                    OfficeField.getText(),
+                    getSelectedSpecialty().name()
+            );
+            if (response.isSuccess()) {
+                clearDoctorForm();
+                loadUserSelectors();
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
+            }
+        } catch (NumberFormatException ex) {
+            showError("El ID debe ser numérico.");
+        } catch (IllegalArgumentException ex) {
+            showError("Selecciona una especialidad válida.");
         }
     }//GEN-LAST:event_SaveButtonActionPerformed
 
     private void DoctorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DoctorButtonActionPerformed
-        long idDoctor = parseSelectedId(DoctorComboBox.getItemAt(DoctorComboBox.getSelectedIndex()));
-        Doctor temp = findDoctorById(idDoctor);
-        if (temp != null) {
-            openDoctorView(temp);
-        } else {
-            showError("Select a valid doctor.");
+        if (!hasValidSelection(DoctorComboBox)) {
+            showError("Selecciona un doctor.");
+            return;
+        }
+        try {
+            long idDoctor = parseSelectedId(DoctorComboBox.getItemAt(DoctorComboBox.getSelectedIndex()));
+            Doctor temp = findDoctorById(idDoctor);
+            if (temp != null) {
+                openDoctorView(temp.getId());
+            } else {
+                showError("Select a valid doctor.");
+            }
+        } catch (NumberFormatException ex) {
+            showError("Selecciona un doctor válido.");
         }
     }//GEN-LAST:event_DoctorButtonActionPerformed
 
@@ -453,12 +468,20 @@ public class AdminView extends javax.swing.JFrame {
     }//GEN-LAST:event_LogoutButtonActionPerformed
 
     private void PatientButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PatientButtonActionPerformed
-        long idPatient = parseSelectedId(PatientComboBox.getItemAt(PatientComboBox.getSelectedIndex()));
-        Patient temp = findPatientById(idPatient);
-        if (temp != null) {
-            openPatientView(temp);
-        } else {
-            showError("Select a valid patient.");
+        if (!hasValidSelection(PatientComboBox)) {
+            showError("Selecciona un paciente.");
+            return;
+        }
+        try {
+            long idPatient = parseSelectedId(PatientComboBox.getItemAt(PatientComboBox.getSelectedIndex()));
+            Patient temp = findPatientById(idPatient);
+            if (temp != null) {
+                openPatientView(temp.getId());
+            } else {
+                showError("Select a valid patient.");
+            }
+        } catch (NumberFormatException ex) {
+            showError("Selecciona un paciente válido.");
         }
     }//GEN-LAST:event_PatientButtonActionPerformed
 
@@ -483,7 +506,7 @@ public class AdminView extends javax.swing.JFrame {
     }
 
     private Doctor findDoctorById(long idDoctor) {
-        for (User candidate : this.users) {
+        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
             if (candidate.getId() == idDoctor && candidate instanceof Doctor) {
                 return (Doctor) candidate;
             }
@@ -492,7 +515,7 @@ public class AdminView extends javax.swing.JFrame {
     }
 
     private Patient findPatientById(long idPatient) {
-        for (User candidate : this.users) {
+        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
             if (candidate.getId() == idPatient && candidate instanceof Patient) {
                 return (Patient) candidate;
             }
@@ -500,14 +523,14 @@ public class AdminView extends javax.swing.JFrame {
         return null;
     }
 
-    private void openDoctorView(Doctor doctor) {
-        DoctorView view = new DoctorView(user, doctor, users, hospitalizations, appointments);
+    private void openDoctorView(long doctorId) {
+        DoctorView view = new DoctorView(currentUser, doctorId);
         this.setVisible(false);
         view.setVisible(true);
     }
 
-    private void openPatientView(Patient patient) {
-        PatientView view = new PatientView(user, patient, users, appointments, hospitalizations);
+    private void openPatientView(long patientId) {
+        PatientView view = new PatientView(currentUser, patientId);
         this.setVisible(false);
         view.setVisible(true);
     }
@@ -521,7 +544,7 @@ public class AdminView extends javax.swing.JFrame {
     private void loadUserSelectors() {
         resetComboBox(DoctorComboBox);
         resetComboBox(PatientComboBox);
-        for (User candidate : this.users) {
+        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
             if (candidate instanceof Doctor) {
                 DoctorComboBox.addItem(formatUserOption(candidate));
             } else if (candidate instanceof Patient) {
@@ -533,6 +556,67 @@ public class AdminView extends javax.swing.JFrame {
     private void resetComboBox(javax.swing.JComboBox<String> comboBox) {
         comboBox.removeAllItems();
         comboBox.addItem("Select one");
+    }
+
+    private boolean hasValidSelection(javax.swing.JComboBox<String> comboBox) {
+        Object selected = comboBox.getSelectedItem();
+        return selected != null && !"Select one".equals(selected.toString());
+    }
+
+    private boolean validateDoctorForm() {
+        if (FirstNameField.getText().trim().isEmpty()) {
+            showError("El nombre del doctor no puede estar vacío.");
+            return false;
+        }
+        if (!isValidPersonName(FirstNameField.getText())) {
+            showError("El nombre del doctor solo puede contener letras y espacios.");
+            return false;
+        }
+        if (LastNameField.getText().trim().isEmpty()) {
+            showError("El apellido del doctor no puede estar vacío.");
+            return false;
+        }
+        if (!isValidPersonName(LastNameField.getText())) {
+            showError("El apellido del doctor solo puede contener letras y espacios.");
+            return false;
+        }
+        if (IdField.getText().trim().isEmpty()) {
+            showError("El ID del doctor no puede estar vacío.");
+            return false;
+        }
+        if (!IdField.getText().trim().matches("\\d+")) {
+            showError("El ID del doctor debe contener solo números.");
+            return false;
+        }
+        if (!hasValidSelection(SpecialityComboBox)) {
+            showError("Selecciona una especialidad.");
+            return false;
+        }
+        if (LicenseField.getText().trim().isEmpty()) {
+            showError("La licencia médica no puede estar vacía.");
+            return false;
+        }
+        if (OfficeField.getText().trim().isEmpty()) {
+            showError("La oficina asignada no puede estar vacía.");
+            return false;
+        }
+        if (UserField.getText().trim().isEmpty()) {
+            showError("El usuario no puede estar vacío.");
+            return false;
+        }
+        if (PasswordField.getText().trim().isEmpty()) {
+            showError("La contraseña no puede estar vacía.");
+            return false;
+        }
+        if (ConfirmationField.getText().trim().isEmpty()) {
+            showError("Debes confirmar la contraseña.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidPersonName(String value) {
+        return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
     private String formatUserOption(User candidate) {

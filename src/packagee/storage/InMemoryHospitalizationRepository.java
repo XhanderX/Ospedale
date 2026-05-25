@@ -23,19 +23,24 @@ public class InMemoryHospitalizationRepository implements HospitalizationReposit
 
     @Override
     public void save(Hospitalization hospitalization) {
+        boolean exists = false;
         for (int i = 0; i < hospitalizations.size(); i++) {
             if (hospitalizations.get(i).getId().equals(hospitalization.getId())) {
                 hospitalizations.set(i, hospitalization);
-                return;
+                exists = true;
+                break;
             }
         }
-        hospitalizations.add(hospitalization);
+        if (!exists) {
+            hospitalizations.add(hospitalization);
+        }
 
         if (!containsHospitalizationWithId(hospitalization.getPatient().getHospitalizations(), hospitalization.getId())) {
             hospitalization.getPatient().addHospitalization(hospitalization);
         }
 
-        if (!containsHospitalizationWithId(hospitalization.getDoctor().getHospitalizations(), hospitalization.getId())) {
+        if (hospitalization.getDoctor() != null
+                && !containsHospitalizationWithId(hospitalization.getDoctor().getHospitalizations(), hospitalization.getId())) {
             hospitalization.getDoctor().addHospitalization(hospitalization);
         }
     }
@@ -70,7 +75,7 @@ public class InMemoryHospitalizationRepository implements HospitalizationReposit
     public List<Hospitalization> findByDoctorId(long doctorId) {
         List<Hospitalization> result = new ArrayList<>();
         for (Hospitalization hospitalization : hospitalizations) {
-            if (hospitalization.getDoctor().getId() == doctorId) {
+            if (hospitalization.getDoctor() != null && hospitalization.getDoctor().getId() == doctorId) {
                 result.add(hospitalization);
             }
         }

@@ -5,22 +5,21 @@
 package packagee.view;
 
 import java.awt.Color;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import packagee.Administrator;
-import packagee.Appointment;
-import packagee.AppointmentStatus;
-import packagee.Doctor;
-import packagee.Hospitalization;
-import packagee.HospitalizationStatus;
-import packagee.Patient;
-import packagee.Prescription;
-import packagee.RoomType;
-import packagee.Specialty;
-import packagee.User;
+import packagee.AppContext;
+import packagee.dto.AppointmentDTO;
+import packagee.dto.DoctorDTO;
+import packagee.dto.UserDTO;
+import packagee.model.AppointmentType;
+import packagee.model.Doctor;
+import packagee.model.Hospitalization;
+import packagee.model.Patient;
+import packagee.model.Prescription;
+import packagee.model.Specialty;
+import packagee.model.User;
+import packagee.response.Response;
 
 /**
  *
@@ -30,21 +29,17 @@ import packagee.User;
 public class DoctorView extends javax.swing.JFrame {
 
     private int x, y;
-    private User user;
-    private ArrayList<User> users;
-    private ArrayList<Hospitalization>hospitalizations;
-    private ArrayList<Appointment>appointments;
-    private Doctor doctor;
-    private Patient patient;
-    public DoctorView(User user,Doctor doc, ArrayList<User> users,ArrayList<Hospitalization> hospitalizations,ArrayList<Appointment> appointments) {
+    private final AppContext appContext;
+    private final UserDTO currentUser;
+    private final long doctorId;
+
+    public DoctorView(UserDTO user, long doctorId) {
         initComponents();
-        this.user = user;
-        this.users =users;
-        this.doctor = doc;
-        this.hospitalizations = hospitalizations;
-        this.appointments = appointments;
+        this.appContext = AppContext.getInstance();
+        this.currentUser = user;
+        this.doctorId = doctorId;
         refreshDoctorViewData();
-        if (user instanceof Administrator)
+        if ("admin".equals(user.getType()))
             BackButton.setVisible(true);
         else    
             BackButton.setVisible(false);
@@ -1130,33 +1125,39 @@ public class DoctorView extends javax.swing.JFrame {
 
     private void PendingRadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PendingRadButtonActionPerformed
         TotalRadButton.setSelected(false);
-        loadDoctorAppointments(this.doctor, true);
+        loadDoctorAppointments(true);
     }//GEN-LAST:event_PendingRadButtonActionPerformed
 
     private void SaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButtonActionPerformed
-        String firstname = FirstNameField.getText();
-        String lastname = LastnameField.getText();
-        Specialty specialty = getSelectedSpecialty();
-        String licenseNumber = LicenseNumField.getText();
-        String assignedOffice = AssignedOffField.getText();
-        String username = UserField.getText();
-        String password = PasswordField.getText();
-        String comPassword = ConfirmField.getText();
-        if (password.equals(comPassword)) {
-            Doctor currentDoctor = findCurrentDoctor();
-            if (currentDoctor != null) {
-                currentDoctor.setFirstname(firstname);
-                currentDoctor.setLastname(lastname);
-                currentDoctor.setPassword(password);
-                currentDoctor.setUsername(username);
-                currentDoctor.setAssignedOffice(assignedOffice);
-                currentDoctor.setLicenceNumber(licenseNumber);
-                currentDoctor.setSpecialty(specialty);
-                clearDoctorForm();
-                showMessage("Doctor information updated successfully.");
+        if (!validateDoctorProfileForm()) {
+            return;
+        }
+        try {
+            if (!PasswordField.getText().isEmpty() || !ConfirmField.getText().isEmpty()) {
+                if (!PasswordField.getText().equals(ConfirmField.getText())) {
+                    showError("Password confirmation does not match.");
+                    return;
+                }
             }
-        } else {
-            showError("Password confirmation does not match.");
+
+            Response<?> response = appContext.getDoctorController().updateDoctor(
+                    doctorId,
+                    UserField.getText(),
+                    FirstNameField.getText(),
+                    LastnameField.getText(),
+                    LicenseNumField.getText(),
+                    AssignedOffField.getText(),
+                    getSelectedSpecialty().name()
+            );
+            if (response.isSuccess()) {
+                refreshDoctorViewData();
+                clearDoctorForm();
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
+            }
+        } catch (RuntimeException ex) {
+            showError("Revisa la información del doctor antes de guardar.");
         }
     }//GEN-LAST:event_SaveButtonActionPerformed
 
@@ -1169,63 +1170,111 @@ public class DoctorView extends javax.swing.JFrame {
     }//GEN-LAST:event_BackButtonActionPerformed
 
     private void CancelHospiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelHospiButtonActionPerformed
-        if (HospiRequestRadButton.isSelected()) {
-            Hospitalization hospitalization = findHospitalizationById(RequestComboBox.getItemAt(RequestComboBox.getSelectedIndex()));
-            if (hospitalization != null) {
-                hospitalization.setStatus(HospitalizationStatus.CANCELED);
+        if (!hasValidSelection(RequestComboBox)) {
+            showError("Selecciona una hospitalización.");
+            return;
+        }
+        try {
+            Response<?> response = appContext.getHospitalizationController().denyOrCancelHospitalization(
+                    RequestComboBox.getItemAt(RequestComboBox.getSelectedIndex())
+            );
+            if (response.isSuccess()) {
                 refreshDoctorViewData();
-                showMessage("Hospitalization canceled successfully.");
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
             }
+        } catch (RuntimeException ex) {
+            showError("Selecciona una hospitalización válida.");
         }
     }//GEN-LAST:event_CancelHospiButtonActionPerformed
 
     private void GenerateHospiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenerateHospiButtonActionPerformed
-        if (PatientIDHospiRadButton.isSelected()) {
-            Patient selectedPatient = findPatientById(parseSelectedId(PatientIdComboBox.getItemAt(PatientIdComboBox.getSelectedIndex())));
-            if (selectedPatient != null && this.user instanceof Administrator) {
-                String reason = ReasonForHospiArea.getText();
-                String observations = HospitalizationObsArea.getText();
-                LocalDate entryDate = parseDate(DateEntryHospiField.getText());
-                this.hospitalizations.add(new Hospitalization("asdfasdf", selectedPatient, this.doctor, entryDate, reason, RoomType.IMC, observations, HospitalizationStatus.ONGOING));
+        if (!validateDoctorHospitalizationForm()) {
+            return;
+        }
+        try {
+            Response<?> response;
+            if (HospiRequestRadButton.isSelected()) {
+                response = appContext.getHospitalizationController().approveHospitalization(
+                        RequestComboBox.getItemAt(RequestComboBox.getSelectedIndex()),
+                        doctorId,
+                        "IMC",
+                        HospitalizationObsArea.getText()
+                );
+            } else {
+                response = appContext.getHospitalizationController().createHospitalizationByPatient(
+                        parseSelectedId(PatientIdComboBox.getItemAt(PatientIdComboBox.getSelectedIndex())),
+                        doctorId,
+                        DateEntryHospiField.getText(),
+                        ReasonForHospiArea.getText(),
+                        HospitalizationObsArea.getText()
+                );
+            }
+
+            if (response.isSuccess()) {
                 refreshDoctorViewData();
                 clearHospitalizationForm();
-                showMessage("Hospitalization generated successfully.");
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
             }
+        } catch (RuntimeException ex) {
+            showError("Revisa los datos de hospitalización antes de continuar.");
         }
     }//GEN-LAST:event_GenerateHospiButtonActionPerformed
 
     private void SearchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchButtonActionPerformed
-        Patient patientSelection = findPatientById(parseSelectedId(PatientComboBox.getItemAt(PatientComboBox.getSelectedIndex())));
-        if (patientSelection != null) {
-            loadPatientAppointmentHistory(patientSelection);
+        if (!hasValidSelection(PatientComboBox)) {
+            showError("Selecciona un paciente.");
+            return;
         }
+        loadPatientAppointmentHistory(parseSelectedId(PatientComboBox.getItemAt(PatientComboBox.getSelectedIndex())));
     }//GEN-LAST:event_SearchButtonActionPerformed
 
     private void TotalRadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TotalRadButtonActionPerformed
         PendingRadButton.setSelected(false);
-        loadDoctorAppointments(this.doctor, false);
+        loadDoctorAppointments(false);
     }//GEN-LAST:event_TotalRadButtonActionPerformed
 
     private void AcceptMedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AcceptMedButtonActionPerformed
-        Appointment appointment = findAppointmentById(AcceptMedBox.getItemAt(AcceptMedBox.getSelectedIndex()));
-        if (appointment != null) {
-            appointment.setStatus(AppointmentStatus.PENDING);
-            refreshDoctorViewData();
-            showMessage("Appointment accepted successfully.");
+        if (!hasValidSelection(AcceptMedBox)) {
+            showError("Selecciona una cita.");
+            return;
+        }
+        try {
+            Response<?> response = appContext.getAppointmentController().acceptAppointment(
+                    AcceptMedBox.getItemAt(AcceptMedBox.getSelectedIndex())
+            );
+            if (response.isSuccess()) {
+                refreshDoctorViewData();
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
+            }
+        } catch (RuntimeException ex) {
+            showError("Selecciona una cita válida.");
         }
     }//GEN-LAST:event_AcceptMedButtonActionPerformed
 
     private void CompleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CompleteButtonActionPerformed
-        Appointment appointment = findAppointmentById(CompleteAppoBox.getItemAt(CompleteAppoBox.getSelectedIndex()));
-        if (appointment != null) {
-            appointment.setStatus(AppointmentStatus.CANCELED);
-            appointment.setDiagnosis(DiagnosisArea.getText());
-            appointment.setFollowUp(FollowUpIndicationsArea.getText());
-            appointment.setRecommendedTreatment(RecommendTreatMentArea.getText());
-            appointment.setObservations(ObservationArea.getText());
-            refreshDoctorViewData();
-            clearCompletionForm();
-            showMessage("Appointment completed successfully.");
+        if (!hasValidSelection(CompleteAppoBox)) {
+            showError("Selecciona una cita.");
+            return;
+        }
+        try {
+            Response<?> response = appContext.getAppointmentController().completeAppointment(
+                    CompleteAppoBox.getItemAt(CompleteAppoBox.getSelectedIndex())
+            );
+            if (response.isSuccess()) {
+                refreshDoctorViewData();
+                clearCompletionForm();
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
+            }
+        } catch (RuntimeException ex) {
+            showError("Selecciona una cita válida.");
         }
     }//GEN-LAST:event_CompleteButtonActionPerformed
 
@@ -1236,69 +1285,87 @@ public class DoctorView extends javax.swing.JFrame {
     }//GEN-LAST:event_PrescribeButtonActionPerformed
 
     private void AddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddButtonActionPerformed
-        DefaultTableModel model = (DefaultTableModel) PrescribeMedicationTable.getModel();
-
-        String appointmentId = AppoIdBox.getItemAt(AppoIdBox.getSelectedIndex());
-        String medicationName = MedicationNameField.getText();
-        double dose = Double.parseDouble(DoseField.getText());
-        String administrationRoute = AdminRouteField.getText();
-        int treatmentDuration = parseIntValue(TreatmentDurationField.getText());
-        String additionalInformation = AdditionalInstrucField.getText();
-        int frequency = parseIntValue(FrecuencyField.getText());
-
-        model.addRow(new Object[]{appointmentId, medicationName, DoseField.getText(), administrationRoute, "" + treatmentDuration, additionalInformation, "" + frequency});
-        Appointment appointment = findAppointmentById(appointmentId);
-        if (appointment != null) {
-            appointment.addPrescription(new Prescription(appointment, medicationName, dose, administrationRoute, treatmentDuration, additionalInformation, frequency));
-            refreshDoctorViewData();
-            showMessage("Medication added successfully.");
+        if (!validatePrescriptionForm()) {
+            return;
+        }
+        try {
+            String appointmentId = AppoIdBox.getItemAt(AppoIdBox.getSelectedIndex());
+            Response<packagee.dto.PrescriptionDTO> response = appContext.getAppointmentController().prescribeMedications(
+                    appointmentId,
+                    MedicationNameField.getText(),
+                    parseDoubleValue(DoseField.getText()),
+                    AdminRouteField.getText(),
+                    parseIntValue(TreatmentDurationField.getText()),
+                    AdditionalInstrucField.getText(),
+                    parseIntValue(FrecuencyField.getText())
+            );
+            if (response.isSuccess()) {
+                addPrescriptionRow(appointmentId);
+                clearPrescriptionForm();
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
+            }
+        } catch (RuntimeException ex) {
+            showError("Revisa dosis, frecuencia y duración antes de agregar el medicamento.");
         }
     }//GEN-LAST:event_AddButtonActionPerformed
 
     private void AcceptRescheduleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AcceptRescheduleButtonActionPerformed
-        Appointment appointment = findAppointmentById(RescheduleBox.getItemAt(RescheduleBox.getSelectedIndex()));
-        if (appointment != null) {
-            appointment.getDatetime().with(parseTime(NewTimeField.getText()));
-            appointment.setReason(ReasonField.getText());
-            refreshDoctorViewData();
-            clearRescheduleForm();
-            showMessage("Appointment reschedule processed.");
+        if (!validateRescheduleForm()) {
+            return;
+        }
+        try {
+            Response<?> response = appContext.getAppointmentController().rescheduleAppointment(
+                    RescheduleBox.getItemAt(RescheduleBox.getSelectedIndex()),
+                    NewTimeField.getText(),
+                    ReasonField.getText()
+            );
+            if (response.isSuccess()) {
+                refreshDoctorViewData();
+                clearRescheduleForm();
+                showMessage(response.getMessage());
+            } else {
+                showError(response.getMessage());
+            }
+        } catch (RuntimeException ex) {
+            showError("Revisa la nueva hora y el motivo de reprogramación.");
         }
     }//GEN-LAST:event_AcceptRescheduleButtonActionPerformed
 
-    private void loadDoctorAppointments(Doctor currentDoctor, boolean onlyPending) {
+    private void loadDoctorAppointments(boolean onlyPending) {
+        Response<List<AppointmentDTO>> response = appContext.getDoctorController().getAppointments(doctorId, onlyPending);
         DefaultTableModel model = (DefaultTableModel) AppoimentsTable.getModel();
         model.setRowCount(0);
-        for (Appointment appointment : this.appointments) {
-            if (appointment.getDoctor().getId() == currentDoctor.getId()
-                    && (!onlyPending || appointment.getStatus().equals(AppointmentStatus.PENDING))) {
+        if (response.isSuccess() && response.getData() != null) {
+            for (AppointmentDTO appointment : response.getData()) {
                 model.addRow(new Object[]{
                     appointment.getId(),
                     appointment.getDatetime().toString(),
-                    appointment.getPatient().getFirstname() + " " + appointment.getDoctor().getLastname(),
-                    appointment.getSpecialty().name(),
-                    appointment.isType() ? "In person" : "Virtual",
+                    appointment.getPatientName(),
+                    formatSpecialty(appointment.getSpecialty()),
+                    formatAppointmentType(appointment.getType()),
                     appointment.getStatus().name()
                 });
             }
         }
     }
 
-    private void loadPatientAppointmentHistory(Patient patientSelection) {
+    private void loadPatientAppointmentHistory(long patientIdSelection) {
+        Response<List<AppointmentDTO>> response = appContext.getPatientController().getAppointments(patientIdSelection);
         DefaultTableModel model = (DefaultTableModel) PatientTable.getModel();
         model.setRowCount(0);
-        for (Appointment appointment : this.appointments) {
-            if (appointment.getPatient().getId() != patientSelection.getId()) {
-                continue;
+        if (response.isSuccess() && response.getData() != null) {
+            for (AppointmentDTO appointment : response.getData()) {
+                model.addRow(new Object[]{
+                    appointment.getId(),
+                    appointment.getDatetime().toString(),
+                    appointment.getDoctorName(),
+                    formatSpecialty(appointment.getSpecialty()),
+                    formatAppointmentType(appointment.getType()),
+                    appointment.getStatus().name()
+                });
             }
-            model.addRow(new Object[]{
-                appointment.getId(),
-                appointment.getDatetime().toString(),
-                appointment.getDoctor().getFirstname() + " " + appointment.getDoctor().getLastname(),
-                appointment.getSpecialty().name(),
-                appointment.isType() ? "In-person" : "Remote",
-                appointment.getStatus().name()
-            });
         }
     }
 
@@ -1307,63 +1374,16 @@ public class DoctorView extends javax.swing.JFrame {
         return Specialty.valueOf(specialtyValue.replaceAll(" &", "").replaceAll(" ", "_"));
     }
 
-    private Doctor findCurrentDoctor() {
-        for (User candidate : this.users) {
-            if (doctor.getId() == candidate.getId() && candidate instanceof Doctor) {
-                return (Doctor) candidate;
-            }
-        }
-        return null;
-    }
-
-    private Appointment findAppointmentById(String appointmentId) {
-        for (Appointment appointment : this.appointments) {
-            if (appointment.getId().equals(appointmentId)) {
-                return appointment;
-            }
-        }
-        return null;
-    }
-
-    private Hospitalization findHospitalizationById(String hospitalizationId) {
-        for (Hospitalization hospitalization : this.hospitalizations) {
-            if (hospitalization.getId().equals(hospitalizationId)) {
-                return hospitalization;
-            }
-        }
-        return null;
-    }
-
-    private Patient findPatientById(long patientId) {
-        for (User candidate : this.users) {
-            if (candidate.getId() == patientId && candidate instanceof Patient) {
-                return (Patient) candidate;
-            }
-        }
-        return null;
-    }
-
     private long parseLongValue(String value) {
-        return Long.parseLong(value);
+        return Long.parseLong(value.trim());
     }
 
     private int parseIntValue(String value) {
-        return Integer.parseInt(value);
+        return Integer.parseInt(value.trim());
     }
 
-    private LocalDate parseDate(String value) {
-        return LocalDate.of(
-                Integer.parseInt(value.substring(0, 4)),
-                Integer.parseInt(value.substring(5, 7)),
-                Integer.parseInt(value.substring(8))
-        );
-    }
-
-    private LocalTime parseTime(String value) {
-        return LocalTime.of(
-                Integer.parseInt(value.substring(0, 2)),
-                Integer.parseInt(value.substring(3))
-        );
+    private double parseDoubleValue(String value) {
+        return Double.parseDouble(value.trim());
     }
 
     private void openLoginView() {
@@ -1373,27 +1393,39 @@ public class DoctorView extends javax.swing.JFrame {
     }
 
     private void openAdminView() {
-        AdminView admin = new AdminView(user, users, hospitalizations, appointments);
+        AdminView admin = new AdminView(currentUser);
         this.setVisible(false);
         admin.setVisible(true);
     }
 
     private void refreshDoctorViewData() {
-        loadDoctorAppointments(this.doctor, false);
+        loadDoctorProfile();
+        loadDoctorAppointments(false);
         loadPatientOptions();
         loadAppointmentSelectors();
         loadHospitalizationSelectors();
     }
 
+    private void loadDoctorProfile() {
+        Response<DoctorDTO> response = appContext.getDoctorController().getDoctorInfo(doctorId);
+        if (response.isSuccess() && response.getData() != null) {
+            DoctorDTO doctor = response.getData();
+            FirstNameField.setText(doctor.getFirstname());
+            LastnameField.setText(doctor.getLastname());
+            LicenseNumField.setText(doctor.getLicenceNumber());
+            AssignedOffField.setText(doctor.getAssignedOffice());
+            UserField.setText(doctor.getUsername());
+            specialityComboBox.setSelectedItem(formatSpecialty(doctor.getSpecialty()));
+        }
+    }
+
     private void loadPatientOptions() {
         resetComboBox(PatientComboBox);
         resetComboBox(PatientIdComboBox);
-        for (User candidate : this.users) {
-            if (candidate instanceof Patient) {
-                String option = formatUserOption(candidate);
-                PatientComboBox.addItem(option);
-                PatientIdComboBox.addItem(option);
-            }
+        for (Patient patient : appContext.getStorage().getUserRepository().findAllPatients()) {
+            String option = formatUserOption(patient);
+            PatientComboBox.addItem(option);
+            PatientIdComboBox.addItem(option);
         }
     }
 
@@ -1402,8 +1434,9 @@ public class DoctorView extends javax.swing.JFrame {
         resetComboBox(RescheduleBox);
         resetComboBox(CompleteAppoBox);
         resetComboBox(AppoIdBox);
-        for (Appointment appointment : this.appointments) {
-            if (appointment.getDoctor().getId() == this.doctor.getId()) {
+        Response<List<AppointmentDTO>> response = appContext.getDoctorController().getAppointments(doctorId, false);
+        if (response.isSuccess() && response.getData() != null) {
+            for (AppointmentDTO appointment : response.getData()) {
                 String appointmentId = appointment.getId();
                 AcceptMedBox.addItem(appointmentId);
                 RescheduleBox.addItem(appointmentId);
@@ -1415,9 +1448,24 @@ public class DoctorView extends javax.swing.JFrame {
 
     private void loadHospitalizationSelectors() {
         resetComboBox(RequestComboBox);
-        for (Hospitalization hospitalization : this.hospitalizations) {
-            RequestComboBox.addItem(hospitalization.getId());
+        for (Hospitalization hospitalization : appContext.getStorage().getHospitalizationRepository().findAll()) {
+            if (hospitalization.getStatus().name().equals("REQUESTED")) {
+                RequestComboBox.addItem(hospitalization.getId());
+            }
         }
+    }
+
+    private void addPrescriptionRow(String appointmentId) {
+        DefaultTableModel model = (DefaultTableModel) PrescribeMedicationTable.getModel();
+        model.addRow(new Object[]{
+            appointmentId,
+            MedicationNameField.getText(),
+            DoseField.getText(),
+            AdminRouteField.getText(),
+            TreatmentDurationField.getText(),
+            AdditionalInstrucField.getText(),
+            FrecuencyField.getText()
+        });
     }
 
     private void resetComboBox(javax.swing.JComboBox<String> comboBox) {
@@ -1425,8 +1473,133 @@ public class DoctorView extends javax.swing.JFrame {
         comboBox.addItem("Select one");
     }
 
+    private boolean hasValidSelection(javax.swing.JComboBox<String> comboBox) {
+        Object selected = comboBox.getSelectedItem();
+        return selected != null && !"Select one".equals(selected.toString());
+    }
+
     private String formatUserOption(User candidate) {
         return candidate.getId() + " - " + candidate.getFirstname() + " " + candidate.getLastname();
+    }
+
+    private String formatSpecialty(Specialty specialty) {
+        return specialty.name().replace("_", " & ");
+    }
+
+    private String formatAppointmentType(AppointmentType type) {
+        return type == AppointmentType.IN_PERSON ? "In person" : "Virtual";
+    }
+
+    private boolean validateDoctorProfileForm() {
+        if (FirstNameField.getText().trim().isEmpty()) {
+            showError("El nombre del doctor no puede estar vacío.");
+            return false;
+        }
+        if (!isValidPersonName(FirstNameField.getText())) {
+            showError("El nombre del doctor solo puede contener letras y espacios.");
+            return false;
+        }
+        if (LastnameField.getText().trim().isEmpty()) {
+            showError("El apellido del doctor no puede estar vacío.");
+            return false;
+        }
+        if (!isValidPersonName(LastnameField.getText())) {
+            showError("El apellido del doctor solo puede contener letras y espacios.");
+            return false;
+        }
+        if (!hasValidSelection(specialityComboBox)) {
+            showError("Selecciona una especialidad.");
+            return false;
+        }
+        if (LicenseNumField.getText().trim().isEmpty()) {
+            showError("La licencia médica no puede estar vacía.");
+            return false;
+        }
+        if (AssignedOffField.getText().trim().isEmpty()) {
+            showError("La oficina asignada no puede estar vacía.");
+            return false;
+        }
+        if (UserField.getText().trim().isEmpty()) {
+            showError("El usuario no puede estar vacío.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateDoctorHospitalizationForm() {
+        if (HospiRequestRadButton.isSelected()) {
+            return hasValidSelection(RequestComboBox) || showValidation("Selecciona una solicitud de hospitalización.");
+        }
+        if (PatientIDHospiRadButton.isSelected()) {
+            if (!hasValidSelection(PatientIdComboBox)) {
+                showError("Selecciona un paciente.");
+                return false;
+            }
+            if (DateEntryHospiField.getText().trim().isEmpty()) {
+                showError("La fecha de ingreso no puede estar vacía.");
+                return false;
+            }
+            if (ReasonForHospiArea.getText().trim().isEmpty()) {
+                showError("El motivo de hospitalización no puede estar vacío.");
+                return false;
+            }
+            return true;
+        }
+        showError("Selecciona el tipo de hospitalización a procesar.");
+        return false;
+    }
+
+    private boolean validatePrescriptionForm() {
+        if (!hasValidSelection(AppoIdBox)) {
+            showError("Selecciona una cita.");
+            return false;
+        }
+        if (MedicationNameField.getText().trim().isEmpty()) {
+            showError("El nombre del medicamento no puede estar vacío.");
+            return false;
+        }
+        if (DoseField.getText().trim().isEmpty()) {
+            showError("La dosis no puede estar vacía.");
+            return false;
+        }
+        if (AdminRouteField.getText().trim().isEmpty()) {
+            showError("La vía de administración no puede estar vacía.");
+            return false;
+        }
+        if (TreatmentDurationField.getText().trim().isEmpty()) {
+            showError("La duración del tratamiento no puede estar vacía.");
+            return false;
+        }
+        if (FrecuencyField.getText().trim().isEmpty()) {
+            showError("La frecuencia no puede estar vacía.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateRescheduleForm() {
+        if (!hasValidSelection(RescheduleBox)) {
+            showError("Selecciona una cita.");
+            return false;
+        }
+        if (NewTimeField.getText().trim().isEmpty()) {
+            showError("La nueva hora no puede estar vacía.");
+            return false;
+        }
+        if (ReasonField.getText().trim().isEmpty()) {
+            showError("El motivo de reprogramación no puede estar vacío.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean showValidation(String message) {
+        showError(message);
+        return false;
+    }
+
+    private boolean isValidPersonName(String value) {
+        return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
     private long parseSelectedId(String value) {
@@ -1441,14 +1614,8 @@ public class DoctorView extends javax.swing.JFrame {
     }
 
     private void clearDoctorForm() {
-        FirstNameField.setText("");
-        LastnameField.setText("");
-        LicenseNumField.setText("");
-        AssignedOffField.setText("");
-        UserField.setText("");
         PasswordField.setText("");
         ConfirmField.setText("");
-        specialityComboBox.setSelectedIndex(0);
     }
 
     private void clearRescheduleForm() {

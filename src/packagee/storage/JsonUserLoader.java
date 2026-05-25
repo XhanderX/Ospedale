@@ -61,12 +61,22 @@ public class JsonUserLoader {
                         item.getString("firstname"),
                         item.getString("lastname"),
                         item.getString("password"),
-                        Specialty.valueOf(item.getString("specialty")),
+                        parseSpecialty(item.getString("specialty")),
                         item.getString("licenceNumber"),
                         item.getString("assignedOffice")
                 ));
             }
         }
+    }
+
+    private Specialty parseSpecialty(String rawSpecialty) {
+        if ("ORTHOPEDICS".equals(rawSpecialty)) {
+            return Specialty.TRAUMATOLOGY_ORTHOPEDICS;
+        }
+        if ("GYNECOLOGY".equals(rawSpecialty)) {
+            return Specialty.GYNECOLOGY_OBSTETRICS;
+        }
+        return Specialty.valueOf(rawSpecialty);
     }
 
 }

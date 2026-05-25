@@ -90,12 +90,16 @@ public class ModelMapper {
     }
 
     public static HospitalizationDTO toHospitalizationDTO(Hospitalization hospitalization) {
+        long doctorId = hospitalization.getDoctor() != null ? hospitalization.getDoctor().getId() : 0L;
+        String doctorName = hospitalization.getDoctor() != null
+                ? hospitalization.getDoctor().getFirstname() + " " + hospitalization.getDoctor().getLastname()
+                : "Unassigned";
         return new HospitalizationDTO(
                 hospitalization.getId(),
                 hospitalization.getPatient().getId(),
                 hospitalization.getPatient().getFirstname() + " " + hospitalization.getPatient().getLastname(),
-                hospitalization.getDoctor().getId(),
-                hospitalization.getDoctor().getFirstname() + " " + hospitalization.getDoctor().getLastname(),
+                doctorId,
+                doctorName,
                 hospitalization.getDate(),
                 hospitalization.getReason(),
                 hospitalization.getRoomType(),

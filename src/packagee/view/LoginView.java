@@ -5,15 +5,11 @@
 package packagee.view;
 
 import java.awt.Color;
-import java.time.LocalDate;
-import java.util.ArrayList;
 import javax.swing.JOptionPane;
-import packagee.Administrator;
-import packagee.Appointment;
-import packagee.Doctor;
-import packagee.Hospitalization;
-import packagee.Patient;
-import packagee.User;
+import packagee.AppContext;
+import packagee.dto.UserDTO;
+import packagee.model.Gender;
+import packagee.response.Response;
 
 /**
  *
@@ -23,17 +19,13 @@ import packagee.User;
 public class LoginView extends javax.swing.JFrame {
 
     private int x, y;
-    private ArrayList<User> users;
-    private ArrayList<Hospitalization> hospitalizations;
-    private ArrayList<Appointment> appointments;
+    private final AppContext appContext;
 
     public LoginView() {
         initComponents();
+        this.appContext = AppContext.getInstance();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
-
-        this.users = new ArrayList<>();
-        this.users.add(new Administrator(0, "admin", "admin", "adnim", "admin123"));
     }
 
     /**
@@ -418,83 +410,123 @@ public class LoginView extends javax.swing.JFrame {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
-        User selectedUser = findUserByUsername(usernameField.getText());
-        if (selectedUser != null && selectedUser.getPassword().equals(PasswordField.getText())) {
-            if (selectedUser instanceof Administrator) {
-                openAdminView(selectedUser);
-            } else if (selectedUser instanceof Doctor) {
-                openDoctorView(selectedUser);
-            } else {
-                openPatientView(selectedUser);
-            }
+        if (usernameField.getText().trim().isEmpty()) {
+            showError("El usuario no puede estar vacío.");
+            return;
+        }
+        if (PasswordField.getText().trim().isEmpty()) {
+            showError("La contraseña no puede estar vacía.");
+            return;
+        }
+        Response<UserDTO> response = appContext.getAuthController().login(
+                usernameField.getText(),
+                PasswordField.getText()
+        );
+        if (response.isSuccess()) {
+            clearLoginForm();
+            openUserHome(response.getData());
         } else {
-            showError("Invalid username or password.");
+            showError(response.getMessage());
         }
     }//GEN-LAST:event_loginButtonActionPerformed
 
     private void SaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButtonActionPerformed
-        String firstname = FirstNameField.getText();
-        String lastname = LastNameField.getText();
-        long id = parseLongValue(IdField.getText());
-        boolean gender = (GenderComboBox.getSelectedIndex() == 0 ? null : (GenderComboBox.getSelectedIndex() == 1 ));
-        String address = AddressField.getText();
-        long phone = parseLongValue(PhoneField.getText());
-        String email = EmailField.getText();
-        String user = UserField.getText();
-        String password = PatientPasswordField.getText();
-        String comPassword = ConfirmationPassPatioField.getText();
-        LocalDate birthdate = parseDate(BirthdateField.getText());
-        if (comPassword.equals(password)) {
-            users.add(new Patient(id, user, firstname, lastname, password, email, birthdate, gender, phone, address));
-            clearPatientRegisterForm();
-            showMessage("Patient registered successfully.");
-        } else {
-            showError("Password confirmation does not match.");
+        String idText = IdField.getText().trim();
+        String phoneText = PhoneField.getText().trim();
+
+        if (FirstNameField.getText().trim().isEmpty()) {
+            showError("El nombre no puede estar vacío.");
+            return;
         }
-        
+        if (!isValidPersonName(FirstNameField.getText())) {
+            showError("El nombre solo puede contener letras y espacios.");
+            return;
+        }
+        if (LastNameField.getText().trim().isEmpty()) {
+            showError("El apellido no puede estar vacío.");
+            return;
+        }
+        if (!isValidPersonName(LastNameField.getText())) {
+            showError("El apellido solo puede contener letras y espacios.");
+            return;
+        }
+        if (idText.isEmpty()) {
+            showError("El ID no puede estar vacío.");
+            return;
+        }
+        if (!idText.matches("\\d+")) {
+            showError("El ID debe contener solo números.");
+            return;
+        }
+        if (phoneText.isEmpty()) {
+            showError("El teléfono no puede estar vacío.");
+            return;
+        }
+        if (!phoneText.matches("\\d+")) {
+            showError("El teléfono debe contener solo números.");
+            return;
+        }
+
+        long id = parseLong(idText);
+        String genderValue = getSelectedGenderValue();
+        Response<?> response = appContext.getPatientController().registerPatient(
+                id,
+                UserField.getText(),
+                FirstNameField.getText(),
+                LastNameField.getText(),
+                PatientPasswordField.getText(),
+                ConfirmationPassPatioField.getText(),
+                phoneText,
+                EmailField.getText(),
+                BirthdateField.getText(),
+                genderValue,
+                AddressField.getText()
+        );
+        if (response.isSuccess()) {
+            clearPatientRegisterForm();
+            showMessage(response.getMessage());
+        } else {
+            showError(response.getMessage());
+        }
     }//GEN-LAST:event_SaveButtonActionPerformed
 
     private void ConfirmationPassPatioFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConfirmationPassPatioFieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_ConfirmationPassPatioFieldActionPerformed
 
-    private User findUserByUsername(String username) {
-        for (User user : this.users) {
-            if (username.equals(user.getUsername())) {
-                return user;
-            }
+    private void openUserHome(UserDTO user) {
+        javax.swing.JFrame nextView;
+        switch (user.getType()) {
+            case "admin":
+                nextView = new AdminView(user);
+                break;
+            case "doctor":
+                nextView = new DoctorView(user, user.getId());
+                break;
+            default:
+                nextView = new PatientView(user, user.getId());
+                break;
         }
-        return null;
-    }
-
-    private void openAdminView(User selectedUser) {
-        AdminView admin = new AdminView(selectedUser, users, hospitalizations, appointments);
         this.setVisible(false);
-        admin.setVisible(true);
+        nextView.setVisible(true);
     }
 
-    private void openDoctorView(User selectedUser) {
-        DoctorView doctor = new DoctorView(selectedUser, (Doctor) selectedUser, users, hospitalizations, appointments);
-        this.setVisible(false);
-        doctor.setVisible(true);
+    private long parseLong(String value) {
+        return Long.parseLong(value.trim());
     }
 
-    private void openPatientView(User selectedUser) {
-        PatientView patient = new PatientView(selectedUser, (Patient) selectedUser, users, appointments, hospitalizations);
-        this.setVisible(false);
-        patient.setVisible(true);
+    private String getSelectedGenderValue() {
+        if (GenderComboBox.getSelectedIndex() == 1) {
+            return Gender.FEMALE.name();
+        }
+        if (GenderComboBox.getSelectedIndex() == 2) {
+            return Gender.MALE.name();
+        }
+        return "";
     }
 
-    private long parseLongValue(String value) {
-        return Long.parseLong(value);
-    }
-
-    private LocalDate parseDate(String value) {
-        return LocalDate.of(
-                Integer.parseInt(value.substring(0, 4)),
-                Integer.parseInt(value.substring(5, 7)),
-                Integer.parseInt(value.substring(8))
-        );
+    private boolean isValidPersonName(String value) {
+        return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
     private void clearLoginForm() {

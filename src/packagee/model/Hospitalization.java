@@ -14,7 +14,7 @@ public class Hospitalization {
 
     private final String id;
     private final Patient patient;
-    private final Doctor doctor;
+    private Doctor doctor;
     private LocalDate date;
     private String reason;
     private RoomType roomType;
@@ -82,6 +82,10 @@ public class Hospitalization {
 
     public void setStatus(HospitalizationStatus status) {
         this.status = status;
+    }
+
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
     }
 
 }
