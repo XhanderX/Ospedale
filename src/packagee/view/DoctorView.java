@@ -666,6 +666,7 @@ public class DoctorView extends javax.swing.JFrame {
 
         PatientIdComboBox.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         PatientIdComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select one" }));
+        PatientIdComboBox.setPrototypeDisplayValue("000000000000 - Patient");
         PatientIdComboBox.setPreferredSize(new Dimension(190, 31));
 
         ReasonForHospiArea.setColumns(20);
