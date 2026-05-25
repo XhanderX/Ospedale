@@ -213,9 +213,13 @@ public class AppointmentController {
      * @param appointmentId ID de la cita.
      * @return Response con AppointmentDTO actualizado.
      */
-    public Response<AppointmentDTO> completeAppointment(String appointmentId) {
+    public Response<AppointmentDTO> completeAppointment(String appointmentId, String diagnosis, String observations, String recommendedTreatment, String followUp) {
         if (appointmentId == null || appointmentId.trim().isEmpty()) {
             return Response.error(StatusCode.INVALID_DATA, "ID de cita no válido.");
+        }
+
+        if (diagnosis == null || diagnosis.trim().isEmpty()) {
+            return Response.error(StatusCode.INVALID_DATA, "El diagnostico no puede estar vacio.");
         }
 
         Optional<Appointment> found = appointmentRepository.findById(appointmentId);
@@ -230,7 +234,12 @@ public class AppointmentController {
                     "Solo se puede completar una cita en estado PENDING. Estado actual: " + appointment.getStatus());
         }
 
+        appointment.setDiagnosis(diagnosis);
+        appointment.setObservations(observations);
+        appointment.setRecommendedTreatment(recommendedTreatment);
+        appointment.setFollowUp(followUp);
         appointment.setStatus(AppointmentStatus.COMPLETED);
+
         appointmentRepository.save(appointment);
         return Response.success("Cita completada exitosamente.", ModelMapper.toAppointmentDTO(appointment));
     }

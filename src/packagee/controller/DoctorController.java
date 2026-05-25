@@ -82,7 +82,8 @@ public class DoctorController {
 
     public Response<DoctorDTO> updateDoctor(long id, String username, String firstname,
                                             String lastname, String licenceNumber,
-                                            String assignedOffice, String specialty) {
+                                            String assignedOffice, String specialty,
+                                            String password, String confirmPassword) {
         if (!userValidator.validateId(id)) {
             return Response.error(StatusCode.INVALID_DATA, "ID de doctor inválido.");
         }
@@ -100,6 +101,12 @@ public class DoctorController {
         }
         if (!doctorValidator.validateAssignedOffice(assignedOffice)) {
             return Response.error(StatusCode.INVALID_DATA, "El formato de la oficina asignada debe ser O-XXX.");
+        }
+
+        boolean shouldUpdatePassword = (password != null && !password.trim().isEmpty())
+                || (confirmPassword != null && !confirmPassword.trim().isEmpty());
+        if (shouldUpdatePassword && !userValidator.validatePasswords(password, confirmPassword)) {
+            return Response.error(StatusCode.INVALID_DATA, "Las contraseÃ±as no coinciden.");
         }
 
         Specialty doctorSpecialty;
@@ -125,6 +132,9 @@ public class DoctorController {
         doctor.setLicenceNumber(licenceNumber);
         doctor.setAssignedOffice(assignedOffice);
         doctor.setSpecialty(doctorSpecialty);
+        if (shouldUpdatePassword) {
+            doctor.setPassword(password);
+        }
 
         userRepository.save(doctor);
         return Response.success("Información del doctor actualizada exitosamente.", ModelMapper.toDoctorDTO(doctor));
@@ -161,5 +171,13 @@ public class DoctorController {
         }
 
         return Response.success("Citas del doctor obtenidas exitosamente.", dtos);
+    }
+
+    public Response<List<DoctorDTO>> getAllDoctors() {
+        List<DoctorDTO> dtos = new ArrayList<>();
+        for (Doctor doctor : userRepository.findAllDoctors()) {
+            dtos.add(ModelMapper.toDoctorDTO(doctor));
+        }
+        return Response.success("Doctores obtenidos exitosamente.", dtos);
     }
 }

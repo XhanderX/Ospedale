@@ -10,13 +10,13 @@ import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import packagee.AppContext;
 import packagee.dto.AppointmentDTO;
+import packagee.dto.DoctorDTO;
 import packagee.dto.PatientDTO;
 import packagee.dto.UserDTO;
 import packagee.model.AppointmentType;
-import packagee.model.Doctor;
 import packagee.model.Gender;
+import packagee.model.RoomType;
 import packagee.model.Specialty;
-import packagee.model.User;
 import packagee.response.Response;
 
 /**
@@ -804,9 +804,6 @@ public class PatientView extends javax.swing.JFrame {
     }//GEN-LAST:event_CancelButtonActionPerformed
 
     private void SaveModifyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveModifyButtonActionPerformed
-        if (!validatePatientForm()) {
-            return;
-        }
         try {
             Response<?> response = appContext.getPatientController().updatePatient(
                     patientId,
@@ -817,7 +814,9 @@ public class PatientView extends javax.swing.JFrame {
                     EmailField.getText(),
                     BirthdayFIeld.getText(),
                     getSelectedGenderValue(),
-                    AddressField.getText()
+                    AddressField.getText(),
+                    PasswordField.getText(),
+                    PassConfirmationField.getText()
             );
             if (response.isSuccess()) {
                 refreshPatientViewData();
@@ -855,16 +854,14 @@ public class PatientView extends javax.swing.JFrame {
     }//GEN-LAST:event_DoctorRadButtonActionPerformed
 
     private void CreateAppoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateAppoButtonActionPerformed
-        if (!validateAppointmentRequestForm()) {
+        if (!canSubmitAppointmentRequest()) {
             return;
         }
         try {
             Long doctorId = null;
-            String specialtyValue;
+            String specialtyValue = null;
             if (DoctorRadButton.isSelected()) {
                 doctorId = parseSelectedId(MedicalAppoBox.getItemAt(MedicalAppoBox.getSelectedIndex()));
-                Doctor selectedDoctor = findDoctorById(doctorId);
-                specialtyValue = selectedDoctor != null ? selectedDoctor.getSpecialty().name() : "";
             } else {
                 specialtyValue = mapDisplaySpecialtyToEnum(MedicalAppoBox.getItemAt(MedicalAppoBox.getSelectedIndex()));
             }
@@ -896,14 +893,17 @@ public class PatientView extends javax.swing.JFrame {
     }//GEN-LAST:event_RefreshButtonActionPerformed
 
     private void CreateHospiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CreateHospiButtonActionPerformed
-        if (!validateHospitalizationForm()) {
+        if (!canSubmitHospitalizationRequest()) {
             return;
         }
         try {
             Response<?> response = appContext.getHospitalizationController().requestHospitalization(
                     patientId,
+                    parseSelectedId(AtteDoctorBox.getItemAt(AtteDoctorBox.getSelectedIndex())),
                     EstiDateField.getText(),
-                    HospiReasonArea.getText()
+                    HospiReasonArea.getText(),
+                    RoomTypeBox.getItemAt(RoomTypeBox.getSelectedIndex()),
+                    ObservationArea.getText()
             );
             if (response.isSuccess()) {
                 clearHospitalizationForm();
@@ -931,15 +931,6 @@ public class PatientView extends javax.swing.JFrame {
         return Long.parseLong(value.substring(0, separatorIndex));
     }
 
-    private Doctor findDoctorById(long doctorId) {
-        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
-            if (candidate instanceof Doctor && candidate.getId() == doctorId) {
-                return (Doctor) candidate;
-            }
-        }
-        return null;
-    }
-
     private void loadSpecialtyOptions() {
         resetComboBox(MedicalAppoBox);
         for (Specialty specialty : Specialty.values()) {
@@ -949,8 +940,11 @@ public class PatientView extends javax.swing.JFrame {
 
     private void loadDoctorOptions() {
         resetComboBox(MedicalAppoBox);
-        for (Doctor doctor : appContext.getStorage().getUserRepository().findAllDoctors()) {
-            MedicalAppoBox.addItem(formatDoctorOption(doctor));
+        Response<List<DoctorDTO>> response = appContext.getDoctorController().getAllDoctors();
+        if (response.isSuccess() && response.getData() != null) {
+            for (DoctorDTO doctor : response.getData()) {
+                MedicalAppoBox.addItem(formatDoctorOption(doctor));
+            }
         }
     }
 
@@ -971,8 +965,11 @@ public class PatientView extends javax.swing.JFrame {
 
     private void loadDoctorSelectionOptions() {
         resetComboBox(AtteDoctorBox);
-        for (Doctor doctor : appContext.getStorage().getUserRepository().findAllDoctors()) {
-            AtteDoctorBox.addItem(formatDoctorOption(doctor));
+        Response<List<DoctorDTO>> response = appContext.getDoctorController().getAllDoctors();
+        if (response.isSuccess() && response.getData() != null) {
+            for (DoctorDTO doctor : response.getData()) {
+                AtteDoctorBox.addItem(formatDoctorOption(doctor));
+            }
         }
     }
 
@@ -1015,7 +1012,15 @@ public class PatientView extends javax.swing.JFrame {
             loadCancelableAppointments(java.util.Collections.emptyList());
         }
 
+        loadRoomTypeOptions();
         loadDoctorSelectionOptions();
+    }
+
+    private void loadRoomTypeOptions() {
+        resetComboBox(RoomTypeBox);
+        for (RoomType roomType : RoomType.values()) {
+            RoomTypeBox.addItem(roomType.name());
+        }
     }
 
     private void resetComboBox(javax.swing.JComboBox<String> comboBox) {
@@ -1028,7 +1033,7 @@ public class PatientView extends javax.swing.JFrame {
         return selected != null && !"Select one".equals(selected.toString());
     }
 
-    private String formatDoctorOption(Doctor doctor) {
+    private String formatDoctorOption(DoctorDTO doctor) {
         return doctor.getId() + " - " + doctor.getFirstname() + " " + doctor.getLastname();
     }
 
@@ -1065,6 +1070,34 @@ public class PatientView extends javax.swing.JFrame {
 
     private String formatAppointmentType(AppointmentType type) {
         return type == AppointmentType.IN_PERSON ? "In-person" : "Remote";
+    }
+
+    private boolean canSubmitAppointmentRequest() {
+        if (!DoctorRadButton.isSelected() && !SpecialtyRadButton.isSelected()) {
+            showError("Selecciona si la cita sera por doctor o por especialidad.");
+            return false;
+        }
+        if (!hasValidSelection(MedicalAppoBox)) {
+            showError("Selecciona un doctor o una especialidad.");
+            return false;
+        }
+        if (!hasValidSelection(AppoTypeBox)) {
+            showError("Selecciona el tipo de cita.");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean canSubmitHospitalizationRequest() {
+        if (!hasValidSelection(AtteDoctorBox)) {
+            showError("Selecciona el doctor tratante.");
+            return false;
+        }
+        if (!hasValidSelection(RoomTypeBox)) {
+            showError("Selecciona el tipo de habitacion.");
+            return false;
+        }
+        return true;
     }
 
     private boolean validatePatientForm() {
@@ -1144,12 +1177,20 @@ public class PatientView extends javax.swing.JFrame {
     }
 
     private boolean validateHospitalizationForm() {
+        if (!hasValidSelection(AtteDoctorBox)) {
+            showError("Selecciona el doctor tratante.");
+            return false;
+        }
         if (EstiDateField.getText().trim().isEmpty()) {
             showError("La fecha estimada no puede estar vacía.");
             return false;
         }
         if (HospiReasonArea.getText().trim().isEmpty()) {
             showError("El motivo de la hospitalización no puede estar vacío.");
+            return false;
+        }
+        if (!hasValidSelection(RoomTypeBox)) {
+            showError("Selecciona el tipo de habitacion.");
             return false;
         }
         return true;

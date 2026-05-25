@@ -96,7 +96,8 @@ public class PatientController {
 
     public Response<PatientDTO> updatePatient(long id, String username, String firstname,
                                               String lastname, String phone, String email,
-                                              String birthdate, String gender, String address) {
+                                              String birthdate, String gender, String address,
+                                              String password, String confirmPassword) {
         if (!userValidator.validateId(id)) {
             return Response.error(StatusCode.INVALID_DATA, "ID de usuario inválido.");
         }
@@ -117,6 +118,12 @@ public class PatientController {
         }
         if (!patientValidator.validateBirthdate(birthdate)) {
             return Response.error(StatusCode.INVALID_DATA, "La fecha de nacimiento no es válida o no tiene el formato AAAA-MM-DD.");
+        }
+
+        boolean shouldUpdatePassword = (password != null && !password.trim().isEmpty())
+                || (confirmPassword != null && !confirmPassword.trim().isEmpty());
+        if (shouldUpdatePassword && !userValidator.validatePasswords(password, confirmPassword)) {
+            return Response.error(StatusCode.INVALID_DATA, "Las contraseñas no coinciden.");
         }
 
         Optional<User> found = userRepository.findById(id);
@@ -144,6 +151,9 @@ public class PatientController {
         patient.setBirthdate(LocalDate.parse(birthdate));
         patient.setGender(patientGender);
         patient.setAddress(address);
+        if (shouldUpdatePassword) {
+            patient.setPassword(password);
+        }
 
         userRepository.save(patient);
         return Response.success("Información del paciente actualizada exitosamente.", ModelMapper.toPatientDTO(patient));
@@ -177,5 +187,13 @@ public class PatientController {
         }
 
         return Response.success("Citas del paciente obtenidas exitosamente.", dtos);
+    }
+
+    public Response<List<PatientDTO>> getAllPatients() {
+        List<PatientDTO> dtos = new ArrayList<>();
+        for (Patient patient : userRepository.findAllPatients()) {
+            dtos.add(ModelMapper.toPatientDTO(patient));
+        }
+        return Response.success("Pacientes obtenidos exitosamente.", dtos);
     }
 }

@@ -5,13 +5,13 @@
 package packagee.view;
 
 import java.awt.Color;
+import java.util.List;
 import javax.swing.JOptionPane;
 import packagee.AppContext;
+import packagee.dto.DoctorDTO;
+import packagee.dto.PatientDTO;
 import packagee.dto.UserDTO;
-import packagee.model.Doctor;
-import packagee.model.Patient;
 import packagee.model.Specialty;
-import packagee.model.User;
 import packagee.response.Response;
 
 /**
@@ -415,7 +415,8 @@ public class AdminView extends javax.swing.JFrame {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void SaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButtonActionPerformed
-        if (!validateDoctorForm()) {
+        if (!hasValidSelection(SpecialityComboBox)) {
+            showError("Selecciona una especialidad.");
             return;
         }
         try {
@@ -451,12 +452,7 @@ public class AdminView extends javax.swing.JFrame {
         }
         try {
             long idDoctor = parseSelectedId(DoctorComboBox.getItemAt(DoctorComboBox.getSelectedIndex()));
-            Doctor temp = findDoctorById(idDoctor);
-            if (temp != null) {
-                openDoctorView(temp.getId());
-            } else {
-                showError("Select a valid doctor.");
-            }
+            openDoctorView(idDoctor);
         } catch (NumberFormatException ex) {
             showError("Selecciona un doctor válido.");
         }
@@ -474,12 +470,7 @@ public class AdminView extends javax.swing.JFrame {
         }
         try {
             long idPatient = parseSelectedId(PatientComboBox.getItemAt(PatientComboBox.getSelectedIndex()));
-            Patient temp = findPatientById(idPatient);
-            if (temp != null) {
-                openPatientView(temp.getId());
-            } else {
-                showError("Select a valid patient.");
-            }
+            openPatientView(idPatient);
         } catch (NumberFormatException ex) {
             showError("Selecciona un paciente válido.");
         }
@@ -505,24 +496,6 @@ public class AdminView extends javax.swing.JFrame {
         return Specialty.valueOf(specialtyValue.replaceAll(" &", "").replaceAll(" ", "_"));
     }
 
-    private Doctor findDoctorById(long idDoctor) {
-        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
-            if (candidate.getId() == idDoctor && candidate instanceof Doctor) {
-                return (Doctor) candidate;
-            }
-        }
-        return null;
-    }
-
-    private Patient findPatientById(long idPatient) {
-        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
-            if (candidate.getId() == idPatient && candidate instanceof Patient) {
-                return (Patient) candidate;
-            }
-        }
-        return null;
-    }
-
     private void openDoctorView(long doctorId) {
         DoctorView view = new DoctorView(currentUser, doctorId);
         this.setVisible(false);
@@ -544,11 +517,17 @@ public class AdminView extends javax.swing.JFrame {
     private void loadUserSelectors() {
         resetComboBox(DoctorComboBox);
         resetComboBox(PatientComboBox);
-        for (User candidate : appContext.getStorage().getUserRepository().findAll()) {
-            if (candidate instanceof Doctor) {
-                DoctorComboBox.addItem(formatUserOption(candidate));
-            } else if (candidate instanceof Patient) {
-                PatientComboBox.addItem(formatUserOption(candidate));
+        Response<List<DoctorDTO>> doctors = appContext.getDoctorController().getAllDoctors();
+        if (doctors.isSuccess() && doctors.getData() != null) {
+            for (DoctorDTO doctor : doctors.getData()) {
+                DoctorComboBox.addItem(formatDoctorOption(doctor));
+            }
+        }
+
+        Response<List<PatientDTO>> patients = appContext.getPatientController().getAllPatients();
+        if (patients.isSuccess() && patients.getData() != null) {
+            for (PatientDTO patient : patients.getData()) {
+                PatientComboBox.addItem(formatPatientOption(patient));
             }
         }
     }
@@ -619,8 +598,12 @@ public class AdminView extends javax.swing.JFrame {
         return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
-    private String formatUserOption(User candidate) {
-        return candidate.getId() + " - " + candidate.getFirstname() + " " + candidate.getLastname();
+    private String formatDoctorOption(DoctorDTO doctor) {
+        return doctor.getId() + " - " + doctor.getFirstname() + " " + doctor.getLastname();
+    }
+
+    private String formatPatientOption(PatientDTO patient) {
+        return patient.getId() + " - " + patient.getFirstname() + " " + patient.getLastname();
     }
 
     private void clearDoctorForm() {

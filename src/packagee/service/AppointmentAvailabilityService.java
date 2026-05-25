@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import packagee.model.Appointment;
+import packagee.model.AppointmentStatus;
 import packagee.model.Doctor;
 import packagee.model.Specialty;
 import packagee.storage.AppointmentRepository;
@@ -52,6 +53,10 @@ public class AppointmentAvailabilityService implements IAppointmentAvailabilityS
         List<Appointment> doctorAppointments = appointmentRepository.findByDoctorId(doctorId);
 
         for (Appointment appointment : doctorAppointments) {
+            if (appointment.getStatus() == AppointmentStatus.CANCELED) {
+                continue;
+            }
+
             LocalDateTime dt = appointment.getDatetime();
 
             // Comparamos

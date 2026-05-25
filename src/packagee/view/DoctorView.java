@@ -11,14 +11,12 @@ import javax.swing.table.DefaultTableModel;
 import packagee.AppContext;
 import packagee.dto.AppointmentDTO;
 import packagee.dto.DoctorDTO;
+import packagee.dto.HospitalizationDTO;
+import packagee.dto.PatientDTO;
 import packagee.dto.UserDTO;
 import packagee.model.AppointmentType;
-import packagee.model.Doctor;
-import packagee.model.Hospitalization;
-import packagee.model.Patient;
 import packagee.model.Prescription;
 import packagee.model.Specialty;
-import packagee.model.User;
 import packagee.response.Response;
 
 /**
@@ -1129,17 +1127,11 @@ public class DoctorView extends javax.swing.JFrame {
     }//GEN-LAST:event_PendingRadButtonActionPerformed
 
     private void SaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButtonActionPerformed
-        if (!validateDoctorProfileForm()) {
+        if (!hasValidSelection(specialityComboBox)) {
+            showError("Selecciona una especialidad.");
             return;
         }
         try {
-            if (!PasswordField.getText().isEmpty() || !ConfirmField.getText().isEmpty()) {
-                if (!PasswordField.getText().equals(ConfirmField.getText())) {
-                    showError("Password confirmation does not match.");
-                    return;
-                }
-            }
-
             Response<?> response = appContext.getDoctorController().updateDoctor(
                     doctorId,
                     UserField.getText(),
@@ -1147,7 +1139,9 @@ public class DoctorView extends javax.swing.JFrame {
                     LastnameField.getText(),
                     LicenseNumField.getText(),
                     AssignedOffField.getText(),
-                    getSelectedSpecialty().name()
+                    getSelectedSpecialty().name(),
+                    PasswordField.getText(),
+                    ConfirmField.getText()
             );
             if (response.isSuccess()) {
                 refreshDoctorViewData();
@@ -1190,7 +1184,7 @@ public class DoctorView extends javax.swing.JFrame {
     }//GEN-LAST:event_CancelHospiButtonActionPerformed
 
     private void GenerateHospiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenerateHospiButtonActionPerformed
-        if (!validateDoctorHospitalizationForm()) {
+        if (!canSubmitDoctorHospitalization()) {
             return;
         }
         try {
@@ -1264,7 +1258,11 @@ public class DoctorView extends javax.swing.JFrame {
         }
         try {
             Response<?> response = appContext.getAppointmentController().completeAppointment(
-                    CompleteAppoBox.getItemAt(CompleteAppoBox.getSelectedIndex())
+                    CompleteAppoBox.getItemAt(CompleteAppoBox.getSelectedIndex()),
+                    DiagnosisArea.getText(),
+                    ObservationArea.getText(),
+                    RecommendTreatMentArea.getText(),
+                    FollowUpIndicationsArea.getText()
             );
             if (response.isSuccess()) {
                 refreshDoctorViewData();
@@ -1285,7 +1283,7 @@ public class DoctorView extends javax.swing.JFrame {
     }//GEN-LAST:event_PrescribeButtonActionPerformed
 
     private void AddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddButtonActionPerformed
-        if (!validatePrescriptionForm()) {
+        if (!canSubmitPrescription()) {
             return;
         }
         try {
@@ -1312,7 +1310,8 @@ public class DoctorView extends javax.swing.JFrame {
     }//GEN-LAST:event_AddButtonActionPerformed
 
     private void AcceptRescheduleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AcceptRescheduleButtonActionPerformed
-        if (!validateRescheduleForm()) {
+        if (!hasValidSelection(RescheduleBox)) {
+            showError("Selecciona una cita.");
             return;
         }
         try {
@@ -1422,10 +1421,13 @@ public class DoctorView extends javax.swing.JFrame {
     private void loadPatientOptions() {
         resetComboBox(PatientComboBox);
         resetComboBox(PatientIdComboBox);
-        for (Patient patient : appContext.getStorage().getUserRepository().findAllPatients()) {
-            String option = formatUserOption(patient);
-            PatientComboBox.addItem(option);
-            PatientIdComboBox.addItem(option);
+        Response<List<PatientDTO>> response = appContext.getPatientController().getAllPatients();
+        if (response.isSuccess() && response.getData() != null) {
+            for (PatientDTO patient : response.getData()) {
+                String option = formatPatientOption(patient);
+                PatientComboBox.addItem(option);
+                PatientIdComboBox.addItem(option);
+            }
         }
     }
 
@@ -1448,8 +1450,9 @@ public class DoctorView extends javax.swing.JFrame {
 
     private void loadHospitalizationSelectors() {
         resetComboBox(RequestComboBox);
-        for (Hospitalization hospitalization : appContext.getStorage().getHospitalizationRepository().findAll()) {
-            if (hospitalization.getStatus().name().equals("REQUESTED")) {
+        Response<List<HospitalizationDTO>> response = appContext.getHospitalizationController().getRequestedHospitalizations();
+        if (response.isSuccess() && response.getData() != null) {
+            for (HospitalizationDTO hospitalization : response.getData()) {
                 RequestComboBox.addItem(hospitalization.getId());
             }
         }
@@ -1478,8 +1481,8 @@ public class DoctorView extends javax.swing.JFrame {
         return selected != null && !"Select one".equals(selected.toString());
     }
 
-    private String formatUserOption(User candidate) {
-        return candidate.getId() + " - " + candidate.getFirstname() + " " + candidate.getLastname();
+    private String formatPatientOption(PatientDTO patient) {
+        return patient.getId() + " - " + patient.getFirstname() + " " + patient.getLastname();
     }
 
     private String formatSpecialty(Specialty specialty) {
@@ -1488,6 +1491,20 @@ public class DoctorView extends javax.swing.JFrame {
 
     private String formatAppointmentType(AppointmentType type) {
         return type == AppointmentType.IN_PERSON ? "In person" : "Virtual";
+    }
+
+    private boolean canSubmitDoctorHospitalization() {
+        if (HospiRequestRadButton.isSelected()) {
+            return hasValidSelection(RequestComboBox) || showValidation("Selecciona una solicitud de hospitalización.");
+        }
+        if (PatientIDHospiRadButton.isSelected()) {
+            return hasValidSelection(PatientIdComboBox) || showValidation("Selecciona un paciente.");
+        }
+        return showValidation("Selecciona el tipo de hospitalización a procesar.");
+    }
+
+    private boolean canSubmitPrescription() {
+        return hasValidSelection(AppoIdBox) || showValidation("Selecciona una cita.");
     }
 
     private boolean validateDoctorProfileForm() {
