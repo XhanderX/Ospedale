@@ -9,6 +9,13 @@
             <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/view/DoctorView.java</file>
             <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/Main.java</file>
             <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/User.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/controller/AppointmentController.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/controller/AuthController.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/controller/DoctorController.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/dto/AppointmentDTO.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/mapper/ModelMapper.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/response/StatusCode.java</file>
+            <file>file:/C:/Users/manue/OneDrive/Documentos/GitHub/Ospedale/src/packagee/response/Response.java</file>
         </group>
     </open-files>
 </project-private>
