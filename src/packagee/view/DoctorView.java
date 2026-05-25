@@ -632,7 +632,7 @@ public class DoctorView extends javax.swing.JFrame {
         HospiRequestRadButton.setText("Requests");
 
         PatientIDHospiRadButton.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
-        PatientIDHospiRadButton.setText("Patient ID");
+        PatientIDHospiRadButton.setText("Appointment");
 
         DiagnosisArea.setColumns(20);
         DiagnosisArea.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
@@ -666,7 +666,7 @@ public class DoctorView extends javax.swing.JFrame {
 
         PatientIdComboBox.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         PatientIdComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select one" }));
-        PatientIdComboBox.setPrototypeDisplayValue("000000000000 - Patient");
+        PatientIdComboBox.setPrototypeDisplayValue("A-000000000000-0000");
         PatientIdComboBox.setPreferredSize(new Dimension(190, 31));
 
         ReasonForHospiArea.setColumns(20);
@@ -1202,11 +1202,11 @@ public class DoctorView extends javax.swing.JFrame {
                         HospitalizationObsArea.getText()
                 );
             } else {
-                response = appContext.getHospitalizationController().createHospitalizationByPatient(
-                        parseSelectedId(PatientIdComboBox.getItemAt(PatientIdComboBox.getSelectedIndex())),
-                        doctorId,
+                response = appContext.getHospitalizationController().createDirectHospitalization(
+                        PatientIdComboBox.getItemAt(PatientIdComboBox.getSelectedIndex()),
                         DateEntryHospiField.getText(),
                         ReasonForHospiArea.getText(),
+                        "IMC",
                         HospitalizationObsArea.getText()
                 );
             }
@@ -1296,11 +1296,11 @@ public class DoctorView extends javax.swing.JFrame {
             Response<packagee.dto.PrescriptionDTO> response = appContext.getAppointmentController().prescribeMedications(
                     appointmentId,
                     MedicationNameField.getText(),
-                    parseDoubleValue(DoseField.getText()),
+                    DoseField.getText(),
                     AdminRouteField.getText(),
-                    parseIntValue(TreatmentDurationField.getText()),
+                    TreatmentDurationField.getText(),
                     AdditionalInstrucField.getText(),
-                    parseIntValue(FrecuencyField.getText())
+                    FrecuencyField.getText()
             );
             if (response.isSuccess()) {
                 addPrescriptionRow(appointmentId);
@@ -1382,14 +1382,6 @@ public class DoctorView extends javax.swing.JFrame {
         return Long.parseLong(value.trim());
     }
 
-    private int parseIntValue(String value) {
-        return Integer.parseInt(value.trim());
-    }
-
-    private double parseDoubleValue(String value) {
-        return Double.parseDouble(value.trim());
-    }
-
     private void openLoginView() {
         LoginView login = new LoginView();
         this.setVisible(false);
@@ -1425,13 +1417,11 @@ public class DoctorView extends javax.swing.JFrame {
 
     private void loadPatientOptions() {
         resetComboBox(PatientComboBox);
-        resetComboBox(PatientIdComboBox);
         Response<List<PatientDTO>> response = appContext.getPatientController().getAllPatients();
         if (response.isSuccess() && response.getData() != null) {
             for (PatientDTO patient : response.getData()) {
                 String option = formatPatientOption(patient);
                 PatientComboBox.addItem(option);
-                PatientIdComboBox.addItem(option);
             }
         }
     }
@@ -1441,6 +1431,7 @@ public class DoctorView extends javax.swing.JFrame {
         resetComboBox(RescheduleBox);
         resetComboBox(CompleteAppoBox);
         resetComboBox(AppoIdBox);
+        resetComboBox(PatientIdComboBox);
         Response<List<AppointmentDTO>> response = appContext.getDoctorController().getAppointments(doctorId, false);
         if (response.isSuccess() && response.getData() != null) {
             for (AppointmentDTO appointment : response.getData()) {
@@ -1455,6 +1446,7 @@ public class DoctorView extends javax.swing.JFrame {
                 if (appointment.getStatus() == AppointmentStatus.PENDING) {
                     CompleteAppoBox.addItem(appointmentId);
                     AppoIdBox.addItem(appointmentId);
+                    PatientIdComboBox.addItem(appointmentId);
                 }
             }
         }
@@ -1510,7 +1502,7 @@ public class DoctorView extends javax.swing.JFrame {
             return hasValidSelection(RequestComboBox) || showValidation("Selecciona una solicitud de hospitalización.");
         }
         if (PatientIDHospiRadButton.isSelected()) {
-            return hasValidSelection(PatientIdComboBox) || showValidation("Selecciona un paciente.");
+            return hasValidSelection(PatientIdComboBox) || showValidation("Selecciona una cita.");
         }
         return showValidation("Selecciona el tipo de hospitalización a procesar.");
     }
@@ -1519,116 +1511,9 @@ public class DoctorView extends javax.swing.JFrame {
         return hasValidSelection(AppoIdBox) || showValidation("Selecciona una cita.");
     }
 
-    private boolean validateDoctorProfileForm() {
-        if (FirstNameField.getText().trim().isEmpty()) {
-            showError("El nombre del doctor no puede estar vacío.");
-            return false;
-        }
-        if (!isValidPersonName(FirstNameField.getText())) {
-            showError("El nombre del doctor solo puede contener letras y espacios.");
-            return false;
-        }
-        if (LastnameField.getText().trim().isEmpty()) {
-            showError("El apellido del doctor no puede estar vacío.");
-            return false;
-        }
-        if (!isValidPersonName(LastnameField.getText())) {
-            showError("El apellido del doctor solo puede contener letras y espacios.");
-            return false;
-        }
-        if (!hasValidSelection(specialityComboBox)) {
-            showError("Selecciona una especialidad.");
-            return false;
-        }
-        if (LicenseNumField.getText().trim().isEmpty()) {
-            showError("La licencia médica no puede estar vacía.");
-            return false;
-        }
-        if (AssignedOffField.getText().trim().isEmpty()) {
-            showError("La oficina asignada no puede estar vacía.");
-            return false;
-        }
-        if (UserField.getText().trim().isEmpty()) {
-            showError("El usuario no puede estar vacío.");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean validateDoctorHospitalizationForm() {
-        if (HospiRequestRadButton.isSelected()) {
-            return hasValidSelection(RequestComboBox) || showValidation("Selecciona una solicitud de hospitalización.");
-        }
-        if (PatientIDHospiRadButton.isSelected()) {
-            if (!hasValidSelection(PatientIdComboBox)) {
-                showError("Selecciona un paciente.");
-                return false;
-            }
-            if (DateEntryHospiField.getText().trim().isEmpty()) {
-                showError("La fecha de ingreso no puede estar vacía.");
-                return false;
-            }
-            if (ReasonForHospiArea.getText().trim().isEmpty()) {
-                showError("El motivo de hospitalización no puede estar vacío.");
-                return false;
-            }
-            return true;
-        }
-        showError("Selecciona el tipo de hospitalización a procesar.");
-        return false;
-    }
-
-    private boolean validatePrescriptionForm() {
-        if (!hasValidSelection(AppoIdBox)) {
-            showError("Selecciona una cita.");
-            return false;
-        }
-        if (MedicationNameField.getText().trim().isEmpty()) {
-            showError("El nombre del medicamento no puede estar vacío.");
-            return false;
-        }
-        if (DoseField.getText().trim().isEmpty()) {
-            showError("La dosis no puede estar vacía.");
-            return false;
-        }
-        if (AdminRouteField.getText().trim().isEmpty()) {
-            showError("La vía de administración no puede estar vacía.");
-            return false;
-        }
-        if (TreatmentDurationField.getText().trim().isEmpty()) {
-            showError("La duración del tratamiento no puede estar vacía.");
-            return false;
-        }
-        if (FrecuencyField.getText().trim().isEmpty()) {
-            showError("La frecuencia no puede estar vacía.");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean validateRescheduleForm() {
-        if (!hasValidSelection(RescheduleBox)) {
-            showError("Selecciona una cita.");
-            return false;
-        }
-        if (NewTimeField.getText().trim().isEmpty()) {
-            showError("La nueva hora no puede estar vacía.");
-            return false;
-        }
-        if (ReasonField.getText().trim().isEmpty()) {
-            showError("El motivo de reprogramación no puede estar vacío.");
-            return false;
-        }
-        return true;
-    }
-
     private boolean showValidation(String message) {
         showError(message);
         return false;
-    }
-
-    private boolean isValidPersonName(String value) {
-        return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
     private long parseSelectedId(String value) {

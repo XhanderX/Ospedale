@@ -80,6 +80,17 @@ public class DoctorController {
         return Response.success("Doctor registrado exitosamente.", ModelMapper.toDoctorDTO(doctor));
     }
 
+    public Response<DoctorDTO> registerDoctor(String id, String username, String firstname,
+                                              String lastname, String password,
+                                              String confirmPassword, String licenceNumber,
+                                              String assignedOffice, String specialty) {
+        if (!userValidator.validateIdStr(id)) {
+            return Response.error(StatusCode.INVALID_DATA, "El ID debe tener exactamente 12 digitos y ser mayor que 0.");
+        }
+        return registerDoctor(Long.parseLong(id), username, firstname, lastname, password,
+                confirmPassword, licenceNumber, assignedOffice, specialty);
+    }
+
     public Response<DoctorDTO> updateDoctor(long id, String username, String firstname,
                                             String lastname, String licenceNumber,
                                             String assignedOffice, String specialty,

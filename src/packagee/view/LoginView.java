@@ -410,14 +410,6 @@ public class LoginView extends javax.swing.JFrame {
     }//GEN-LAST:event_closeButtonActionPerformed
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
-        if (usernameField.getText().trim().isEmpty()) {
-            showError("El usuario no puede estar vacío.");
-            return;
-        }
-        if (PasswordField.getText().trim().isEmpty()) {
-            showError("La contraseña no puede estar vacía.");
-            return;
-        }
         Response<UserDTO> response = appContext.getAuthController().login(
                 usernameField.getText(),
                 PasswordField.getText()
@@ -431,52 +423,15 @@ public class LoginView extends javax.swing.JFrame {
     }//GEN-LAST:event_loginButtonActionPerformed
 
     private void SaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButtonActionPerformed
-        String idText = IdField.getText().trim();
-        String phoneText = PhoneField.getText().trim();
-
-        if (FirstNameField.getText().trim().isEmpty()) {
-            showError("El nombre no puede estar vacío.");
-            return;
-        }
-        if (!isValidPersonName(FirstNameField.getText())) {
-            showError("El nombre solo puede contener letras y espacios.");
-            return;
-        }
-        if (LastNameField.getText().trim().isEmpty()) {
-            showError("El apellido no puede estar vacío.");
-            return;
-        }
-        if (!isValidPersonName(LastNameField.getText())) {
-            showError("El apellido solo puede contener letras y espacios.");
-            return;
-        }
-        if (idText.isEmpty()) {
-            showError("El ID no puede estar vacío.");
-            return;
-        }
-        if (!idText.matches("\\d+")) {
-            showError("El ID debe contener solo números.");
-            return;
-        }
-        if (phoneText.isEmpty()) {
-            showError("El teléfono no puede estar vacío.");
-            return;
-        }
-        if (!phoneText.matches("\\d+")) {
-            showError("El teléfono debe contener solo números.");
-            return;
-        }
-
-        long id = parseLong(idText);
         String genderValue = getSelectedGenderValue();
         Response<?> response = appContext.getPatientController().registerPatient(
-                id,
+                IdField.getText(),
                 UserField.getText(),
                 FirstNameField.getText(),
                 LastNameField.getText(),
                 PatientPasswordField.getText(),
                 ConfirmationPassPatioField.getText(),
-                phoneText,
+                PhoneField.getText(),
                 EmailField.getText(),
                 BirthdateField.getText(),
                 genderValue,
@@ -511,10 +466,6 @@ public class LoginView extends javax.swing.JFrame {
         nextView.setVisible(true);
     }
 
-    private long parseLong(String value) {
-        return Long.parseLong(value.trim());
-    }
-
     private String getSelectedGenderValue() {
         if (GenderComboBox.getSelectedIndex() == 1) {
             return Gender.FEMALE.name();
@@ -523,10 +474,6 @@ public class LoginView extends javax.swing.JFrame {
             return Gender.MALE.name();
         }
         return "";
-    }
-
-    private boolean isValidPersonName(String value) {
-        return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
     private void clearLoginForm() {

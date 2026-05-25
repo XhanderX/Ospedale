@@ -85,10 +85,6 @@ public final class AppContext {
         return instance;
     }
 
-    public HospitalStorage getStorage() {
-        return storage;
-    }
-
     public AuthController getAuthController() {
         return authController;
     }

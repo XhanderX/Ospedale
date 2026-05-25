@@ -1,2 +1,5 @@
 /build/
 /dist/
+run.out
+run.err
+nbproject/private/

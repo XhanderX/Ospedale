@@ -94,6 +94,18 @@ public class PatientController {
         return Response.success("Paciente registrado exitosamente.", ModelMapper.toPatientDTO(patient));
     }
 
+    public Response<PatientDTO> registerPatient(String id, String username, String firstname,
+                                                String lastname, String password,
+                                                String confirmPassword, String phone,
+                                                String email, String birthdate,
+                                                String gender, String address) {
+        if (!userValidator.validateIdStr(id)) {
+            return Response.error(StatusCode.INVALID_DATA, "El ID debe tener exactamente 12 digitos y ser mayor que 0.");
+        }
+        return registerPatient(Long.parseLong(id), username, firstname, lastname, password,
+                confirmPassword, phone, email, birthdate, gender, address);
+    }
+
     public Response<PatientDTO> updatePatient(long id, String username, String firstname,
                                               String lastname, String phone, String email,
                                               String birthdate, String gender, String address,

@@ -425,7 +425,7 @@ public class AdminView extends javax.swing.JFrame {
         }
         try {
             Response<?> response = appContext.getDoctorController().registerDoctor(
-                    parseLongValue(IdField.getText()),
+                    IdField.getText(),
                     UserField.getText(),
                     FirstNameField.getText(),
                     LastNameField.getText(),
@@ -442,8 +442,6 @@ public class AdminView extends javax.swing.JFrame {
             } else {
                 showError(response.getMessage());
             }
-        } catch (NumberFormatException ex) {
-            showError("El ID debe ser numérico.");
         } catch (IllegalArgumentException ex) {
             showError("Selecciona una especialidad válida.");
         }
@@ -550,62 +548,6 @@ public class AdminView extends javax.swing.JFrame {
         jSeparator2.setVisible(false);
         DoctorComboBox.setMaximumRowCount(5);
         PatientComboBox.setMaximumRowCount(5);
-    }
-
-    private boolean validateDoctorForm() {
-        if (FirstNameField.getText().trim().isEmpty()) {
-            showError("El nombre del doctor no puede estar vacío.");
-            return false;
-        }
-        if (!isValidPersonName(FirstNameField.getText())) {
-            showError("El nombre del doctor solo puede contener letras y espacios.");
-            return false;
-        }
-        if (LastNameField.getText().trim().isEmpty()) {
-            showError("El apellido del doctor no puede estar vacío.");
-            return false;
-        }
-        if (!isValidPersonName(LastNameField.getText())) {
-            showError("El apellido del doctor solo puede contener letras y espacios.");
-            return false;
-        }
-        if (IdField.getText().trim().isEmpty()) {
-            showError("El ID del doctor no puede estar vacío.");
-            return false;
-        }
-        if (!IdField.getText().trim().matches("\\d+")) {
-            showError("El ID del doctor debe contener solo números.");
-            return false;
-        }
-        if (!hasValidSelection(SpecialityComboBox)) {
-            showError("Selecciona una especialidad.");
-            return false;
-        }
-        if (LicenseField.getText().trim().isEmpty()) {
-            showError("La licencia médica no puede estar vacía.");
-            return false;
-        }
-        if (OfficeField.getText().trim().isEmpty()) {
-            showError("La oficina asignada no puede estar vacía.");
-            return false;
-        }
-        if (UserField.getText().trim().isEmpty()) {
-            showError("El usuario no puede estar vacío.");
-            return false;
-        }
-        if (PasswordField.getText().trim().isEmpty()) {
-            showError("La contraseña no puede estar vacía.");
-            return false;
-        }
-        if (ConfirmationField.getText().trim().isEmpty()) {
-            showError("Debes confirmar la contraseña.");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean isValidPersonName(String value) {
-        return value != null && value.trim().matches("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
     }
 
     private String formatDoctorOption(DoctorDTO doctor) {

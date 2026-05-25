@@ -392,4 +392,23 @@ public class AppointmentController {
         PrescriptionDTO dto = ModelMapper.toPrescriptionDTO(prescription);
         return Response.success("Medicamento prescrito exitosamente.", dto);
     }
+
+    public Response<PrescriptionDTO> prescribeMedications(String appointmentId, String medicationName,
+            String dose, String adminRoute, String duration,
+            String instructions, String frequency) {
+        try {
+            return prescribeMedications(
+                    appointmentId,
+                    medicationName,
+                    Double.parseDouble(dose),
+                    adminRoute,
+                    Integer.parseInt(duration),
+                    instructions,
+                    Integer.parseInt(frequency)
+            );
+        } catch (NumberFormatException ex) {
+            return Response.error(StatusCode.INVALID_DATA,
+                    "Dosis, duracion y frecuencia deben ser valores numericos validos.");
+        }
+    }
 }
