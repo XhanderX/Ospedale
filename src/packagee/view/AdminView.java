@@ -29,7 +29,9 @@ public class AdminView extends javax.swing.JFrame {
         initComponents();
         this.appContext = AppContext.getInstance();
         this.currentUser = user;
+        configureAdminLayout();
         loadUserSelectors();
+        pack();
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
     }
@@ -202,6 +204,7 @@ public class AdminView extends javax.swing.JFrame {
 
         DoctorComboBox.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         DoctorComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select one" }));
+        DoctorComboBox.setPrototypeDisplayValue("000000000000 - Doctor Name");
 
         jLabel13.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         jLabel13.setText("Doctor");
@@ -211,6 +214,7 @@ public class AdminView extends javax.swing.JFrame {
 
         PatientComboBox.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         PatientComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select one" }));
+        PatientComboBox.setPrototypeDisplayValue("000000000000 - Patient Name");
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
@@ -274,7 +278,7 @@ public class AdminView extends javax.swing.JFrame {
                                     .addComponent(jLabel12)
                                     .addGap(18, 18, 18)
                                     .addComponent(ConfirmationField, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 82, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
                         .addGroup(panelRound3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(DoctorButton)
                             .addGroup(panelRound3Layout.createSequentialGroup()
@@ -283,12 +287,12 @@ public class AdminView extends javax.swing.JFrame {
                             .addGroup(panelRound3Layout.createSequentialGroup()
                                 .addGap(47, 47, 47)
                                 .addComponent(jLabel13)))
-                        .addGap(74, 74, 74))
+                        .addGap(20, 20, 20))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelRound3Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(LogoutButton)
                         .addGap(318, 318, 318)))
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(panelRound3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(panelRound3Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -300,12 +304,12 @@ public class AdminView extends javax.swing.JFrame {
                     .addGroup(panelRound3Layout.createSequentialGroup()
                         .addGap(59, 59, 59)
                         .addComponent(jLabel14)))
-                .addGap(88, 88, 88))
+                .addGap(24, 24, 24))
             .addGroup(panelRound3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelRound3Layout.createSequentialGroup()
                     .addContainerGap(640, Short.MAX_VALUE)
-                    .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(260, 260, 260)))
+                    .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(24, 24, 24)))
         );
         panelRound3Layout.setVerticalGroup(
             panelRound3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -540,6 +544,12 @@ public class AdminView extends javax.swing.JFrame {
     private boolean hasValidSelection(javax.swing.JComboBox<String> comboBox) {
         Object selected = comboBox.getSelectedItem();
         return selected != null && !"Select one".equals(selected.toString());
+    }
+
+    private void configureAdminLayout() {
+        jSeparator2.setVisible(false);
+        DoctorComboBox.setMaximumRowCount(5);
+        PatientComboBox.setMaximumRowCount(5);
     }
 
     private boolean validateDoctorForm() {

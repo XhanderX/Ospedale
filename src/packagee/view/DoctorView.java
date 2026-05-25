@@ -14,8 +14,8 @@ import packagee.dto.DoctorDTO;
 import packagee.dto.HospitalizationDTO;
 import packagee.dto.PatientDTO;
 import packagee.dto.UserDTO;
+import packagee.model.AppointmentStatus;
 import packagee.model.AppointmentType;
-import packagee.model.Prescription;
 import packagee.model.Specialty;
 import packagee.response.Response;
 
@@ -1440,10 +1440,17 @@ public class DoctorView extends javax.swing.JFrame {
         if (response.isSuccess() && response.getData() != null) {
             for (AppointmentDTO appointment : response.getData()) {
                 String appointmentId = appointment.getId();
-                AcceptMedBox.addItem(appointmentId);
-                RescheduleBox.addItem(appointmentId);
-                CompleteAppoBox.addItem(appointmentId);
-                AppoIdBox.addItem(appointmentId);
+                if (appointment.getStatus() == AppointmentStatus.REQUESTED) {
+                    AcceptMedBox.addItem(appointmentId);
+                }
+                if (appointment.getStatus() == AppointmentStatus.REQUESTED
+                        || appointment.getStatus() == AppointmentStatus.PENDING) {
+                    RescheduleBox.addItem(appointmentId);
+                }
+                if (appointment.getStatus() == AppointmentStatus.PENDING) {
+                    CompleteAppoBox.addItem(appointmentId);
+                    AppoIdBox.addItem(appointmentId);
+                }
             }
         }
     }
