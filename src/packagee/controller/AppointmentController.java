@@ -135,27 +135,27 @@ public class AppointmentController {
         // 9. Resolver doctor: por ID directo o por asignación automática
         Doctor doctor;
 
-if (doctorId != null) {
-    Optional<User> doctorFound = userRepository.findById(doctorId);
-    if (!doctorFound.isPresent() || !(doctorFound.get() instanceof Doctor)) {
-        return Response.error(StatusCode.INVALID_DATA, "No se encontro un doctor con ese ID.");
-    }
+        if (doctorId != null) {
+            Optional<User> doctorFound = userRepository.findById(doctorId);
+            if (!doctorFound.isPresent() || !(doctorFound.get() instanceof Doctor)) {
+                return Response.error(StatusCode.INVALID_DATA, "No se encontro un doctor con ese ID.");
+            }
 
-    doctor = (Doctor) doctorFound.get();
-    appointmentSpecialty = doctor.getSpecialty();
-} else {
-    Long assignedId = availabilityService.assignDoctorBySpecialty(specialty.toUpperCase(), date, time);
-    if (assignedId == null) {
-        return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No hay doctores disponibles con esa especialidad en la franja horaria solicitada.");
-    }
+            doctor = (Doctor) doctorFound.get();
+            appointmentSpecialty = doctor.getSpecialty();
+        } else {
+            Long assignedId = availabilityService.assignDoctorBySpecialty(specialty.toUpperCase(), date, time);
+            if (assignedId == null) {
+                return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No hay doctores disponibles con esa especialidad en la franja horaria solicitada.");
+            }
 
-    Optional<User> assignedFound = userRepository.findById(assignedId);
-    if (!assignedFound.isPresent() || !(assignedFound.get() instanceof Doctor)) {
-        return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No se pudo asignar un doctor disponible.");
-    }
+            Optional<User> assignedFound = userRepository.findById(assignedId);
+            if (!assignedFound.isPresent() || !(assignedFound.get() instanceof Doctor)) {
+                return Response.error(StatusCode.DOCTOR_UNAVAILABLE, "No se pudo asignar un doctor disponible.");
+            }
 
-    doctor = (Doctor) assignedFound.get();
-}
+            doctor = (Doctor) assignedFound.get();
+        }
 
         // 10. Verificar disponibilidad del doctor en la franja horaria
         if (!availabilityService.checkAvailability(doctor.getId(), date, time)) {
