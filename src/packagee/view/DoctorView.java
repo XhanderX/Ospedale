@@ -5,6 +5,7 @@
 package packagee.view;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -624,6 +625,8 @@ public class DoctorView extends javax.swing.JFrame {
 
         RequestComboBox.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         RequestComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select one" }));
+        RequestComboBox.setPrototypeDisplayValue("H-000000000000-0000");
+        RequestComboBox.setPreferredSize(new Dimension(160, 31));
 
         HospiRequestRadButton.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         HospiRequestRadButton.setText("Requests");
@@ -663,6 +666,7 @@ public class DoctorView extends javax.swing.JFrame {
 
         PatientIdComboBox.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
         PatientIdComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Select one" }));
+        PatientIdComboBox.setPreferredSize(new Dimension(190, 31));
 
         ReasonForHospiArea.setColumns(20);
         ReasonForHospiArea.setFont(new java.awt.Font("Yu Gothic UI", 0, 18)); // NOI18N
@@ -795,8 +799,8 @@ public class DoctorView extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addComponent(RequestComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(8, 8, 8)
+                                .addComponent(RequestComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(37, 37, 37)
                                 .addComponent(HospiRequestRadButton)))
@@ -806,16 +810,16 @@ public class DoctorView extends javax.swing.JFrame {
                                 .addComponent(PatientIDHospiRadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(19, 19, 19))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(PatientIdComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(29, 29, 29))))
+                                .addComponent(PatientIdComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(8, 8, 8))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel27, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane10, javax.swing.GroupLayout.PREFERRED_SIZE, 238, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(47, 47, 47))))
+                         .addComponent(jScrollPane10, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
+                         .addGap(24, 24, 24))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -888,8 +892,8 @@ public class DoctorView extends javax.swing.JFrame {
                     .addComponent(PatientIDHospiRadButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(RequestComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(PatientIdComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(RequestComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(PatientIdComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel27)
                 .addGap(16, 16, 16)
