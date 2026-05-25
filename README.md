@@ -5,9 +5,9 @@ estructura MVC y separacion por responsabilidades.
 
 ## Integrantes
 
-- Andres Barandica
-- Andres Issa
-- Manuel Polo
+- Andrés Barandica 2038
+- Andrés Issa 2038
+- Manuel Polo 2039
 
 ## Tecnologias usadas
 
